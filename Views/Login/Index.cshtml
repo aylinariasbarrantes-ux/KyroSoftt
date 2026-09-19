@@ -1,6 +1,28 @@
-﻿namespace SistemaReservasLaboratorios.Views.Login
-{
-    public class Index
-    {
-    }
+﻿@{
+    ViewData["Title"] = "Iniciar sesión";
 }
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <h2 class="mb-4">Iniciar sesión</h2>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger">
+                @ViewBag.Error
+            </div>
+        }
+
+        <form method="post" action="/Login">
+            <div class="mb-3">
+                <label for="nombreUsuario" class="form-label">Usuario</label>
+                <input type="text" id="nombreUsuario" name="nombreUsuario" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" id="password" name="password" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+        </form>
+    </div>
+</div>
