@@ -1,12 +1,17 @@
+using Microsoft.EntityFrameworkCore;
+using SistemaReservasLaboratorios.Data;
 using SistemaReservasLaboratorios.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<AuthService>();
-
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddSession();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 var app = builder.Build();
 
 app.UseSession();
@@ -31,4 +36,3 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-

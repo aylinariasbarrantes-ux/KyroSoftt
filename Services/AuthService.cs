@@ -1,21 +1,23 @@
-﻿using SistemaReservasLaboratorios.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using SistemaReservasLaboratorios.Data;
+using SistemaReservasLaboratorios.Models;
 
 namespace SistemaReservasLaboratorios.Services
 {
     public class AuthService
     {
-        // Lista de usuarios en memoria (simula la base de datos)
-        private readonly List<Usuario> _usuarios = new()
+        private readonly AppDbContext _context;
+
+        public AuthService(AppDbContext context)
         {
-            new Usuario { Id = 1, NombreUsuario = "admin", Password = "admin123", Rol = "Administrador" },
-            new Usuario { Id = 2, NombreUsuario = "usuario1", Password = "user123", Rol = "Usuario" }
-        };
+            _context = context;
+        }
 
         // Valida las credenciales y retorna el usuario si son correctas, o null si no
         public Usuario? ValidarCredenciales(string nombreUsuario, string password)
         {
-            return _usuarios.FirstOrDefault(u =>
-                u.NombreUsuario.Equals(nombreUsuario, StringComparison.OrdinalIgnoreCase) &&
+            return _context.Usuarios.FirstOrDefault(u =>
+                u.NombreUsuario.ToLower() == nombreUsuario.ToLower() &&
                 u.Password == password);
         }
     }
