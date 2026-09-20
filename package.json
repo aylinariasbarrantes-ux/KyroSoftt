@@ -1,0 +1,13 @@
+{
+  "name": "kyrosoft-ui",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm run css:build",
+    "css:build": "npx @tailwindcss/cli -i ./Styles/tailwind.css -o ./wwwroot/css/tailwind.css --minify",
+    "css:watch": "npx @tailwindcss/cli -i ./Styles/tailwind.css -o ./wwwroot/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}
