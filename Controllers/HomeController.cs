@@ -15,6 +15,11 @@ namespace SistemaReservasLaboratorios.Controllers
 
         public IActionResult Index()
         {
+            if (string.IsNullOrWhiteSpace(HttpContext.Session.GetString("NombreUsuario")))
+            {
+                return RedirectToAction("Index", "Login");
+            }
+
             return View();
         }
 

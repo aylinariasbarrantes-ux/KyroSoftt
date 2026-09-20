@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SistemaReservasLaboratorios.Models;
 using SistemaReservasLaboratorios.Services;
 
@@ -19,17 +19,26 @@ namespace SistemaReservasLaboratorios.Controllers
         [HttpGet]
         public IActionResult Index()
         {
+            if (!string.IsNullOrWhiteSpace(HttpContext.Session.GetString("NombreUsuario")))
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
             return View();
         }
 
         // POST: procesa el formulario
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Index(string nombreUsuario, string password)
         {
+            // Conserva el nombre de usuario si la validación falla, sin volver a mostrar la contraseña.
+            ViewBag.NombreUsuario = nombreUsuario;
+
             // Validar que los campos no estén vacíos
             if (string.IsNullOrWhiteSpace(nombreUsuario) || string.IsNullOrWhiteSpace(password))
             {
-                ViewBag.Error = "Debe ingresar usuario y contraseña.";
+                TempData["ToastError"] = "Debe ingresar usuario y contraseña.";
                 return View();
             }
 
@@ -38,13 +47,13 @@ namespace SistemaReservasLaboratorios.Controllers
 
             if (nombreUsuario.Length > 50)
             {
-                ViewBag.Error = "El nombre de usuario no puede superar los 50 caracteres.";
+                TempData["ToastError"] = "El nombre de usuario no puede superar los 50 caracteres.";
                 return View();
             }
 
             if (password.Length > 100)
             {
-                ViewBag.Error = "La contraseña no puede superar los 100 caracteres.";
+                TempData["ToastError"] = "La contraseña no puede superar los 100 caracteres.";
                 return View();
             }
 
@@ -57,14 +66,14 @@ namespace SistemaReservasLaboratorios.Controllers
             {
                 // No se registra la contraseña; solo el error técnico para diagnóstico
                 _logger.LogError(ex, "Error al validar credenciales en el login.");
-                ViewBag.Error = "Ocurrió un error al iniciar sesión. Intente de nuevo más tarde.";
+                TempData["ToastError"] = "Ocurrió un error al iniciar sesión. Intente de nuevo más tarde.";
                 return View();
             }
 
             if (usuario == null)
             {
                 // Mismo mensaje para usuario inexistente y contraseña incorrecta
-                ViewBag.Error = "Usuario o contraseña incorrectos.";
+                TempData["ToastError"] = "Usuario o contraseña incorrectos.";
                 return View();
             }
 
@@ -72,8 +81,20 @@ namespace SistemaReservasLaboratorios.Controllers
             HttpContext.Session.SetString("NombreUsuario", usuario.NombreUsuario);
             HttpContext.Session.SetString("Rol", usuario.Rol);
 
+            TempData["ToastSuccess"] = $"Inicio de sesión exitoso. Bienvenido, {usuario.NombreUsuario}.";
+
             // Redirige según el rol (por ahora al Home, luego pueden diferenciarlo)
             return RedirectToAction("Index", "Home");
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            TempData["ToastSuccess"] = "Sesión cerrada correctamente.";
+            return RedirectToAction(nameof(Index));
         }
     }
 }
