@@ -25,7 +25,17 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<Usuario>>();
-    DbSeeder.Seed(context, hasher);
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        DbSeeder.Seed(context, hasher);
+    }
+    catch (Exception ex)
+    {
+        // Un fallo de BD no debe tumbar el arranque de la app
+        logger.LogError(ex, "No se pudo migrar o sembrar la base de datos al iniciar.");
+    }
 }
 
 app.UseSession();
