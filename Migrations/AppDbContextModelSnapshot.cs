@@ -33,7 +33,7 @@ namespace SistemaReservasLaboratorios.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Password")
+                    b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -44,22 +44,6 @@ namespace SistemaReservasLaboratorios.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Usuarios");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            NombreUsuario = "admin",
-                            Password = "admin123",
-                            Rol = "Administrador"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            NombreUsuario = "usuario1",
-                            Password = "user123",
-                            Rol = "Usuario"
-                        });
                 });
 #pragma warning restore 612, 618
         }
