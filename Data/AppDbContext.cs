@@ -8,8 +8,10 @@ namespace SistemaReservasLaboratorios.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Laboratorio> Laboratorios { get; set; }
+        public DbSet<Reserva> Reservas { get; set; }
 
-        // Sin datos semilla: las contraseñas se hashean al arrancar (salt aleatorio)
-        // y HasData generaría una migración nueva en cada arranque.
+        // Sin datos semilla aquí: los usuarios se hashean y los laboratorios
+        // se siembran en DbSeeder.cs al arrancar la app.
     }
 }
