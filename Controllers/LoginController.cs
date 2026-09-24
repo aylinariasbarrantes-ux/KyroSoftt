@@ -38,6 +38,7 @@ namespace SistemaReservasLaboratorios.Controllers
             // Validar que los campos no estén vacíos
             if (string.IsNullOrWhiteSpace(nombreUsuario) || string.IsNullOrWhiteSpace(password))
             {
+                TempData["ToastTitle"] = "Campos requeridos";
                 TempData["ToastError"] = "Debe ingresar usuario y contraseña.";
                 return View();
             }
@@ -47,12 +48,14 @@ namespace SistemaReservasLaboratorios.Controllers
 
             if (nombreUsuario.Length > 50)
             {
+                TempData["ToastTitle"] = "Máximo de caracteres";
                 TempData["ToastError"] = "El nombre de usuario no puede superar los 50 caracteres.";
                 return View();
             }
 
             if (password.Length > 100)
             {
+                TempData["ToastTitle"] = "Máximo de caracteres";
                 TempData["ToastError"] = "La contraseña no puede superar los 100 caracteres.";
                 return View();
             }
@@ -66,6 +69,7 @@ namespace SistemaReservasLaboratorios.Controllers
             {
                 // No se registra la contraseña; solo el error técnico para diagnóstico
                 _logger.LogError(ex, "Error al validar credenciales en el login.");
+                TempData["ToastTitle"] = "Error";
                 TempData["ToastError"] = "Ocurrió un error al iniciar sesión. Intente de nuevo más tarde.";
                 return View();
             }
@@ -73,6 +77,7 @@ namespace SistemaReservasLaboratorios.Controllers
             if (usuario == null)
             {
                 // Mismo mensaje para usuario inexistente y contraseña incorrecta
+                TempData["ToastTitle"] = "No se pudo iniciar sesión";
                 TempData["ToastError"] = "Usuario o contraseña incorrectos.";
                 return View();
             }
@@ -81,7 +86,8 @@ namespace SistemaReservasLaboratorios.Controllers
             HttpContext.Session.SetString("NombreUsuario", usuario.NombreUsuario);
             HttpContext.Session.SetString("Rol", usuario.Rol);
 
-            TempData["ToastSuccess"] = $"Inicio de sesión exitoso. Bienvenido, {usuario.NombreUsuario}.";
+            TempData["ToastTitle"] = $"Bienvenido(a), {usuario.NombreUsuario}";
+            TempData["ToastSuccess"] = "Inicio de sesión exitoso.";
 
             // Redirige según el rol (por ahora al Home, luego pueden diferenciarlo)
             return RedirectToAction("Index", "Home");
@@ -93,6 +99,7 @@ namespace SistemaReservasLaboratorios.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
+            TempData["ToastTitle"] = "Gracias, vuelva pronto";
             TempData["ToastSuccess"] = "Sesión cerrada correctamente.";
             return RedirectToAction(nameof(Index));
         }

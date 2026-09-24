@@ -2,108 +2,450 @@
     ViewData["Title"] = "Iniciar sesión";
 }
 
-<div class="grid min-h-screen bg-white transition-colors duration-300 dark:bg-zinc-950">
-    <section class="relative hidden overflow-hidden bg-zinc-950 p-12 text-white dark:bg-black lg:flex lg:flex-col lg:justify-between">
-        <div class="absolute inset-0 opacity-40" aria-hidden="true">
-            <div class="absolute -left-24 top-24 h-72 w-72 rounded-full bg-emerald-500/30 blur-3xl"></div>
-            <div class="absolute bottom-10 right-0 h-96 w-96 rounded-full bg-cyan-400/20 blur-3xl"></div>
-            <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0d_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0d_1px,transparent_1px)] bg-[size:36px_36px]"></div>
+<div class="grid min-h-screen bg-white transition-colors duration-300 dark:bg-zinc-950 mx-6 md:mx-0">
+    <div class="md:flex-row flex items-center justify-center flex-col gap-10 md:gap-0">
+        <div class="items-center justify-center flex m-0 md:m-8">
+            <a href="https://www.utn.ac.cr/">
+                <img src="~/images/utn-logo.svg" alt="Logo Universidad Técnica Nacional" class="h-58 w-auto block dark:hidden " />
+                <img src="~/images/utn-logo-white.svg" alt="Logo Universidad Técnica Nacional" class="h-58 w-auto hidden dark:!block" />
+            </a>
         </div>
-
-        <div class="relative z-10 flex items-center gap-3">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-zinc-950 shadow-xl dark:bg-zinc-100 shadow-black/20">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6" aria-hidden="true">
-                    <path d="M9 2h6" /><path d="M10 9h4" /><path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" />
-                </svg>
-            </div>
-            <div>
-                <p class="text-lg font-semibold tracking-tight">KyroSoft</p>
-                <p class="text-sm text-zinc-400">Reserva de laboratorios</p>
-            </div>
-        </div>
-
-        <div class="relative z-10 max-w-xl pb-8">
-            <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300 backdrop-blur">
-                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-                Gestión simple y centralizada
-            </div>
-            <h1 class="text-4xl font-semibold tracking-tight xl:text-5xl">Tus laboratorios, organizados en un solo lugar.</h1>
-            <p class="mt-5 max-w-lg text-base leading-7 text-zinc-400">Consulta disponibilidad, administra reservas y mantén el control de los espacios de forma rápida y clara.</p>
-        </div>
-
-        <p class="relative z-10 text-xs text-zinc-500">Kyro Group · Sistema académico de reservas</p>
-    </section>
-
-    <section class="flex min-h-screen items-center justify-center bg-zinc-50 px-5 py-10 transition-colors duration-300 dark:bg-zinc-950 sm:px-8 lg:bg-white dark:lg:bg-zinc-950">
-        <div class="w-full max-w-[420px]">
-            <div class="mb-8 flex items-center gap-3 lg:hidden">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
-                        <path d="M9 2h6" /><path d="M10 9h4" /><path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" />
-                    </svg>
-                </div>
-                <span class="font-semibold tracking-tight">KyroSoft</span>
-            </div>
-
-            <div class="rounded-2xl border border-zinc-200 p-6 shadow-sm transition-all dark:border-zinc-800 duration-300 ease-out hover:shadow-md sm:p-8 lg:border-0 lg:p-0 lg:shadow-none lg:hover:shadow-none">
-                <div class="mb-7">
-                    <h2 class="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-100">Bienvenido de nuevo</h2>
-                    <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Ingresa tus credenciales para acceder al sistema.</p>
-                </div>
-
-                <form asp-controller="Login" asp-action="Index" method="post" class="space-y-5">
-                    <div class="space-y-2">
-                        <label for="nombreUsuario" class="text-sm font-medium leading-none text-zinc-900 dark:text-zinc-100">Usuario</label>
-                        <div class="relative transition-all duration-200 ease-out focus-within:-translate-y-0.5">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-zinc-400 transition-colors duration-200 dark:text-zinc-500" aria-hidden="true">
-                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-                            </svg>
-                            <input type="text"
-                                   id="nombreUsuario"
-                                   name="nombreUsuario"
-                                   value="@ViewBag.NombreUsuario"
-                                   autocomplete="username"
-                                   maxlength="50"
-                                   required
-                                   autofocus
-                                   placeholder="Ingresa tu usuario"
-                                   class="flex h-10 w-full rounded-md border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-950 shadow-sm outline-none transition-all duration-200 ease-out placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-950 focus:shadow-md focus:ring-1 focus:ring-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:hover:border-zinc-600 dark:focus:border-emerald-500 dark:focus:ring-emerald-500" />
-                        </div>
+        <section class="flex items-center justify-center transition-colors duration-300 sm:px-8">
+            <div class="w-full max-w-[420px]">
+                <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all dark:border-zinc-800 dark:bg-zinc-900 duration-300 ease-out hover:shadow-md sm:p-8 lg:shadow-none lg:hover:shadow-none">
+                    <div class="mb-7">
+                        <h2 class="text-2xl font-semibold tracking-tight text-brand-950 dark:text-zinc-100">Reserva tu laboratorio</h2>
+                        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                            Consulta disponibilidad, gestiona tus reservas y organiza el uso de los laboratorios fácilmente.
+                        </p>
                     </div>
 
-                    <div class="space-y-2">
-                        <label for="password" class="text-sm font-medium leading-none text-zinc-900 dark:text-zinc-100">Contraseña</label>
-                        <div class="relative transition-all duration-200 ease-out focus-within:-translate-y-0.5">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-zinc-400 transition-colors duration-200 dark:text-zinc-500" aria-hidden="true">
-                                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                            <input type="password"
-                                   id="password"
-                                   name="password"
-                                   autocomplete="current-password"
-                                   maxlength="100"
-                                   required
-                                   placeholder="••••••••"
-                                   class="flex h-10 w-full rounded-md border border-zinc-200 bg-white py-2 pl-9 pr-10 text-sm text-zinc-950 shadow-sm outline-none transition-all duration-200 ease-out placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-950 focus:shadow-md focus:ring-1 focus:ring-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:hover:border-zinc-600 dark:focus:border-emerald-500 dark:focus:ring-emerald-500" />
-                            <button type="button" id="togglePassword" class="group absolute right-1 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 transition-all duration-200 ease-out hover:scale-110 hover:bg-zinc-100 hover:text-zinc-700 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 dark:focus-visible:ring-emerald-500" aria-label="Mostrar contraseña">
-                                <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="absolute h-4 w-4 scale-100 rotate-0 opacity-100 transition-all duration-200 ease-out" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7C3.73 7.6 7.79 5 12 5c4.21 0 8.27 2.6 9.94 6.65a1 1 0 0 1 0 .7C20.27 16.4 16.21 19 12 19c-4.21 0-8.27-2.6-9.94-6.65" /><circle cx="12" cy="12" r="3" /></svg>
-                                <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="absolute h-4 w-4 scale-75 -rotate-45 opacity-0 transition-all duration-200 ease-out" aria-hidden="true"><path d="m2 2 20 20" /><path d="M6.71 6.71C4.93 7.9 3.58 9.62 2.66 11.65a1 1 0 0 0 0 .7C4.33 16.4 8.39 19 12.6 19c1.44 0 2.84-.3 4.12-.84" /><path d="M10.73 5.08C11.35 5.03 11.98 5 12.6 5c4.21 0 8.27 2.6 9.94 6.65a1 1 0 0 1 0 .7 12 12 0 0 1-1.27 2.18" /><path d="M14.12 14.12A3 3 0 0 1 10 10" /></svg>
-                            </button>
+                    <form id="loginForm"
+                          asp-controller="Login"
+                          asp-action="Index"
+                          method="post"
+                          novalidate
+                          class="space-y-5">
+                        <div id="usuarioField"
+                             data-invalid="false"
+                             class="group/field space-y-2">
+
+                            <label for="nombreUsuario"
+                                   class="text-sm font-medium leading-none text-zinc-900 transition-colors
+                  dark:text-zinc-100
+                  group-data-[invalid=true]/field:text-red-600
+                  dark:group-data-[invalid=true]/field:text-red-400">
+                                Usuario
+                            </label>
+
+                            <div class="relative transition-all duration-200 ease-out focus-within:-translate-y-0.5">
+
+                                <svg viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="2"
+                                     class="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2
+                    text-zinc-400 transition-colors duration-200
+                    dark:text-zinc-500
+                    group-data-[invalid=true]/field:text-red-500
+                    dark:group-data-[invalid=true]/field:text-red-400"
+                                     aria-hidden="true">
+
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+
+                                <input type="text"
+                                       id="nombreUsuario"
+                                       name="nombreUsuario"
+                                       value="@ViewBag.NombreUsuario"
+                                       autocomplete="username"
+                                       maxlength="50"
+                                       required
+                                       autofocus
+                                       aria-invalid="false"
+                                       placeholder="Ingresa tu usuario"
+                                       class="flex h-10 w-full rounded-md border border-zinc-200 bg-white py-2 pl-9 pr-3
+                      text-sm text-zinc-950 shadow-sm outline-none
+                      transition-all duration-200 ease-out
+                      placeholder:text-zinc-400
+                      hover:border-zinc-300
+                      focus:border-brand-600
+                      focus:shadow-md
+                      focus:ring-1
+                      focus:ring-brand-600
+
+                      dark:border-zinc-700
+                      dark:bg-zinc-950
+                      dark:text-zinc-100
+                      dark:placeholder:text-zinc-600
+                      dark:hover:border-zinc-600
+                      dark:focus:border-brand-400
+                      dark:focus:ring-brand-400
+
+                      group-data-[invalid=true]/field:border-red-500
+                      group-data-[invalid=true]/field:ring-1
+                      group-data-[invalid=true]/field:ring-red-500
+                      group-data-[invalid=true]/field:focus:border-red-500
+                      group-data-[invalid=true]/field:focus:ring-red-500
+
+                      dark:group-data-[invalid=true]/field:border-red-400
+                      dark:group-data-[invalid=true]/field:focus:border-red-400
+                      dark:group-data-[invalid=true]/field:focus:ring-red-400" />
+                            </div>
+
+                            <p class="hidden text-xs font-medium text-red-600
+              dark:text-red-400
+              group-data-[invalid=true]/field:block">
+                                Ingresa tu usuario.
+                            </p>
                         </div>
+
+                        <div id="passwordField"
+                             data-invalid="false"
+                             class="group/field space-y-2">
+
+                            <label for="password"
+                                   class="text-sm font-medium leading-none text-zinc-900 transition-colors
+                  dark:text-zinc-100
+                  group-data-[invalid=true]/field:text-red-600
+                  dark:group-data-[invalid=true]/field:text-red-400">
+                                Contraseña
+                            </label>
+
+                            <div class="relative transition-all duration-200 ease-out focus-within:-translate-y-0.5">
+
+                                <svg viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="2"
+                                     class="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2
+                    text-zinc-400 transition-colors duration-200
+                    dark:text-zinc-500
+                    group-data-[invalid=true]/field:text-red-500
+                    dark:group-data-[invalid=true]/field:text-red-400"
+                                     aria-hidden="true">
+
+                                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+
+                                <input type="password"
+                                       id="password"
+                                       name="password"
+                                       autocomplete="current-password"
+                                       maxlength="100"
+                                       required
+                                       aria-invalid="false"
+                                       placeholder="••••••••"
+                                       class="flex h-10 w-full rounded-md border border-zinc-200 bg-white py-2 pl-9 pr-10
+                      text-sm text-zinc-950 shadow-sm outline-none
+                      transition-all duration-200 ease-out
+                      placeholder:text-zinc-400
+                      hover:border-zinc-300
+                      focus:border-brand-600
+                      focus:shadow-md
+                      focus:ring-1
+                      focus:ring-brand-600
+
+                      dark:border-zinc-700
+                      dark:bg-zinc-950
+                      dark:text-zinc-100
+                      dark:placeholder:text-zinc-600
+                      dark:hover:border-zinc-600
+                      dark:focus:border-brand-400
+                      dark:focus:ring-brand-400
+
+                      group-data-[invalid=true]/field:border-red-500
+                      group-data-[invalid=true]/field:ring-1
+                      group-data-[invalid=true]/field:ring-red-500
+                      group-data-[invalid=true]/field:focus:border-red-500
+                      group-data-[invalid=true]/field:focus:ring-red-500
+
+                      dark:group-data-[invalid=true]/field:border-red-400
+                      dark:group-data-[invalid=true]/field:focus:border-red-400
+                      dark:group-data-[invalid=true]/field:focus:ring-red-400" />
+
+                                <!-- Aquí dejas tu botón del ojo exactamente como lo tienes -->
+                            </div>
+
+                            <p class="hidden text-xs font-medium text-red-600
+              dark:text-red-400
+              group-data-[invalid=true]/field:block">
+                                Ingresa tu contraseña.
+                            </p>
+                        </div>
+
+                        <button type="submit" class="group inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-brand-600 px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-md dark:bg-brand-500 dark:text-white dark:hover:bg-brand-400 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 dark:focus-visible:ring-brand-400 disabled:pointer-events-none disabled:opacity-50">
+                            <span>Iniciar sesión</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
+                        </button>
+                    </form>
+
+                    <div class="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs leading-5 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
+                        <span class="font-medium text-zinc-700 dark:text-zinc-200">Acceso institucional:</span> Ingresa con las credenciales asignadas para acceder
+                        a las funciones disponibles según tu rol.
                     </div>
-
-                    <button type="submit" class="group inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-emerald-400 hover:text-zinc-950 hover:shadow-md dark:bg-zinc-100 dark:text-zinc-950 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
-                        <span>Iniciar sesión</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
-                    </button>
-                </form>
-
-                <div class="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs leading-5 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-                    <span class="font-medium text-zinc-700 dark:text-zinc-200">Acceso de prueba:</span> usa las credenciales proporcionadas para administrador o usuario.
                 </div>
-            </div>
 
-            <p class="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">© 2026 KyroSoft. Sistema de Reservas de Laboratorios.</p>
-        </div>
-    </section>
+                <p class="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">© 2026 KyroSoft. Sistema de Reservas de Laboratorios.</p>
+            </div>
+        </section>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const form = document.getElementById("loginForm");
+
+            const usuario = document.getElementById("nombreUsuario");
+            const password = document.getElementById("password");
+
+            const usuarioField = document.getElementById("usuarioField");
+            const passwordField = document.getElementById("passwordField");
+
+
+            function setError(field, input, hasError) {
+
+                field.dataset.invalid = hasError ? "true" : "false";
+
+                input.setAttribute(
+                    "aria-invalid",
+                    hasError ? "true" : "false"
+                );
+            }
+
+
+                    function showValidationToast(message) {
+
+            let container = document.getElementById("validationToastContainer");
+
+            if (!container) {
+                container = document.createElement("div");
+                container.id = "validationToastContainer";
+
+                container.className =
+                    "fixed right-4 top-4 z-[9999] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-3";
+
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement("div");
+
+            toast.setAttribute("data-toast", "");
+            toast.setAttribute("role", "alert");
+
+            toast.className =
+                "pointer-events-auto relative flex translate-x-6 scale-95 items-start gap-3 " +
+                "overflow-hidden rounded-xl border border-red-200 bg-white p-4 text-sm " +
+                "opacity-0 shadow-lg shadow-zinc-950/10 transition-all duration-300 ease-out " +
+                "dark:border-red-900/70 dark:bg-zinc-900 dark:shadow-black/30";
+
+            toast.innerHTML = `
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center
+                            rounded-full bg-red-100 text-red-700
+                            dark:bg-red-950 dark:text-red-300">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         stroke-linecap="round"
+                         stroke-linejoin="round"
+                         class="h-5 w-5">
+
+                        <line x1="12" x2="12" y1="8" y2="12"></line>
+                        <line x1="12" x2="12.01" y1="16" y2="16"></line>
+                    </svg>
+
+                </div>
+
+                <div class="min-w-0 flex-1 pt-0.5">
+                    <p class="font-semibold text-zinc-950 dark:text-zinc-100">
+                        Campos requeridos
+                    </p>
+
+                    <p data-toast-message
+                       class="mt-0.5 text-zinc-600 dark:text-zinc-400">
+                    </p>
+                </div>
+
+                <button type="button"
+                        data-toast-close
+                        class="inline-flex h-7 w-7 shrink-0 items-center justify-center
+                               rounded-md text-zinc-400
+                               transition-all duration-200
+                               hover:rotate-90 hover:bg-zinc-100 hover:text-zinc-700
+                               active:scale-90
+                               dark:text-zinc-500
+                               dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                        aria-label="Cerrar notificación">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         class="h-4 w-4">
+
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+
+                    </svg>
+                </button>
+
+                <div data-toast-progress
+                     class="absolute inset-x-0 bottom-0 h-0.5
+                            origin-left scale-x-100 bg-red-500
+                            transition-transform duration-[4500ms] ease-linear">
+                </div>
+            `;
+
+            toast.querySelector("[data-toast-message]").textContent = message;
+
+            container.appendChild(toast);
+
+            const progress = toast.querySelector("[data-toast-progress]");
+            const closeButton = toast.querySelector("[data-toast-close]");
+
+            /*
+             * Entrada animada
+             */
+            requestAnimationFrame(() => {
+
+                requestAnimationFrame(() => {
+
+                    toast.classList.remove(
+                        "translate-x-6",
+                        "scale-95",
+                        "opacity-0"
+                    );
+
+                    toast.classList.add(
+                        "translate-x-0",
+                        "scale-100",
+                        "opacity-100"
+                    );
+
+                    progress.classList.remove("scale-x-100");
+                    progress.classList.add("scale-x-0");
+                });
+
+            });
+
+
+            /*
+             * Cerrar toast
+             */
+            function closeToast() {
+
+                toast.classList.remove(
+                    "translate-x-0",
+                    "scale-100",
+                    "opacity-100"
+                );
+
+                toast.classList.add(
+                    "translate-x-6",
+                    "scale-95",
+                    "opacity-0"
+                );
+
+                setTimeout(() => {
+                    toast.remove();
+
+                    if (container.children.length === 0) {
+                        container.remove();
+                    }
+                }, 300);
+            }
+
+
+            closeButton.addEventListener("click", closeToast);
+
+            setTimeout(closeToast, 4500);
+        }
+
+
+            form.addEventListener("submit", function (event) {
+
+                const faltaUsuario = usuario.value.trim() === "";
+                const faltaPassword = password.value.trim() === "";
+
+
+                setError(
+                    usuarioField,
+                    usuario,
+                    faltaUsuario
+                );
+
+                setError(
+                    passwordField,
+                    password,
+                    faltaPassword
+                );
+
+
+                if (faltaUsuario || faltaPassword) {
+
+                    event.preventDefault();
+
+
+                    if (faltaUsuario && faltaPassword) {
+
+                        showValidationToast(
+                            "Debes ingresar tu usuario y contraseña."
+                        );
+
+                        usuario.focus();
+
+                    } else if (faltaUsuario) {
+
+                        showValidationToast(
+                            "Debes ingresar tu usuario."
+                        );
+
+                        usuario.focus();
+
+                    } else {
+
+                        showValidationToast(
+                            "Debes ingresar tu contraseña."
+                        );
+
+                        password.focus();
+                    }
+                }
+            });
+
+
+            usuario.addEventListener("input", function () {
+
+                if (usuario.value.trim() !== "") {
+
+                    setError(
+                        usuarioField,
+                        usuario,
+                        false
+                    );
+                }
+            });
+
+
+            password.addEventListener("input", function () {
+
+                if (password.value.trim() !== "") {
+
+                    setError(
+                        passwordField,
+                        password,
+                        false
+                    );
+                }
+            });
+
+        });
+    </script>
+}

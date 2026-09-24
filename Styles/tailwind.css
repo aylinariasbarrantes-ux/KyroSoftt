@@ -5,4 +5,16 @@
 
 @theme {
     --font-sans: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    /* KyroSoft brand palette — color principal: #012f6b */
+    --color-brand-50: #f2f7fc;
+    --color-brand-100: #e3eef8;
+    --color-brand-200: #c4d9ee;
+    --color-brand-300: #94badf;
+    --color-brand-400: #5d94ca;
+    --color-brand-500: #2e70ae;
+    --color-brand-600: #012f6b;
+    --color-brand-700: #01295e;
+    --color-brand-800: #01234f;
+    --color-brand-900: #011c40;
+    --color-brand-950: #001429;
 }
