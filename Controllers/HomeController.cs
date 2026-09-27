@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using SistemaReservasLaboratorios.Filters;
 using SistemaReservasLaboratorios.Models;
 
 namespace SistemaReservasLaboratorios.Controllers
@@ -13,16 +14,14 @@ namespace SistemaReservasLaboratorios.Controllers
             _logger = logger;
         }
 
+        // La protección de sesión la aplica el filtro [SesionRequerida]
+        [SesionRequerida]
         public IActionResult Index()
         {
-            if (string.IsNullOrWhiteSpace(HttpContext.Session.GetString("NombreUsuario")))
-            {
-                return RedirectToAction("Index", "Login");
-            }
-
             return View();
         }
 
+        [SesionRequerida]
         public IActionResult Privacy()
         {
             return View();
