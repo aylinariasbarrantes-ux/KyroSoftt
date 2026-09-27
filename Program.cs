@@ -12,6 +12,7 @@ builder.Services
     .AddRazorRuntimeCompilation();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LaboratorioService>();
+builder.Services.AddScoped<ReservaService>();
 builder.Services.AddSession();
 
 // Hasher de contraseñas de ASP.NET Core Identity (no guarda texto plano)
