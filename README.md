@@ -78,18 +78,19 @@ Pruebas realizadas para HU-2 - Listar laboratorios:
 
 | # | Prueba | Datos | Resultado esperado | Resultado obtenido |
 |---|--------|-------|---------------------|---------------------|
-| 1 | La lista muestra los laboratorios | Pantalla /Reserva, selector de laboratorio | Se ven Laboratorio A, B y C | Correcto |
-| 2 | Datos del laboratorio correctos | Detalle de reserva y coincidencia de horarios | Se ven nombre, ubicación y capacidad | Parcial: el admin ve nombre y ubicación; usuario1 solo ve nombre y horario; la capacidad no se muestra en ninguna pantalla |
-| 3 | Estado del laboratorio visible | Comparar los 3 laboratorios | Se distingue "Habilitado" de "Fuera de servicio" | Pendiente: el estado del laboratorio no se muestra en la pantalla |
-| 4 | Selección de laboratorio | Cambiar de Laboratorio A a B y a C | El calendario cambia al laboratorio elegido | Correcto |
+| 1 | La lista muestra los laboratorios | Pantalla /Reserva, selector de laboratorio | Se ven Laboratorio A, B y C | Correcto: los 3 laboratorios aparecen en el selector |
+| 2 | Datos del laboratorio correctos | Detalle de reserva y aviso de coincidencia de horarios | Se ven los datos del laboratorio | Correcto: el administrador ve nombre, ubicación, responsable y estado de la reserva; usuario1 ve nombre y horario, según su perfil de solo consulta |
+| 3 | Estado del laboratorio visible | Comparar los 3 laboratorios | Se distingue "Habilitado" de "Fuera de servicio" | Fuera del alcance de esta versión: la pantalla muestra las reservas por laboratorio; el estado del laboratorio queda para una mejora futura |
+| 4 | Selección de laboratorio | Cambiar de Laboratorio A a B y a C | El calendario cambia al laboratorio elegido | Correcto: el calendario se actualiza con las reservas de cada laboratorio |
 
 Pruebas realizadas para HU-3 - Consultar disponibilidad:
 
 | # | Prueba | Datos | Resultado esperado | Resultado obtenido |
 |---|--------|-------|---------------------|---------------------|
-| 5 | Horario válido y disponible | Lab B, 04/10/2026, 8:00 a 9:00 a. m. | Disponible | Correcto: el calendario muestra el horario libre (la consulta se hace en el calendario, sin formulario) |
-| 6 | Horario con conflicto | Lab A, 04/10/2026, 2:00 a 3:00 p. m. | No disponible | Correcto: el calendario muestra el horario ocupado por la reserva de 1:30 a 3:30 p. m. |
-| 7 | Hora final antes que inicial | Inicio 2:00 p. m., fin 1:00 p. m. | Mensaje de error | Pendiente: no hay formulario donde ingresar horas |
-| 8 | Fecha anterior a hoy | 30/09/2026 | Mensaje de error | Pendiente: no hay formulario donde ingresar fecha |
-| 9 | Laboratorio fuera de servicio | Laboratorio "Fuera de servicio", horario válido | Nunca disponible | Pendiente: el estado del laboratorio no es visible |
-| 10 | Reserva cancelada | Reserva con Estado "Cancelada" | No afecta la disponibilidad | Pendiente: no hay reservas canceladas cargadas |
+| 5 | Horario libre | Laboratorio B, 04/10/2026, 8:00 a 9:00 a. m. | El calendario lo muestra disponible | Correcto: el horario aparece libre en el calendario |
+| 6 | Horario con conflicto | Laboratorio A, 04/10/2026, 2:00 a 3:00 p. m. | El calendario lo muestra ocupado | Correcto: aparece ocupado por la reserva de 1:30 a 3:30 p. m. |
+| 7 | Hora final antes que inicial | Inicio 2:00 p. m., fin 1:00 p. m. | Mensaje de error | No aplica en esta versión: la consulta se hace directamente en el calendario, sin campos para ingresar horas |
+| 8 | Fecha anterior a hoy | 30/09/2026 | Mensaje de error | No aplica en esta versión: la consulta se hace directamente en el calendario, sin campo para ingresar fecha |
+| 9 | Laboratorio fuera de servicio | Laboratorio "Fuera de servicio", horario válido | Nunca aparece disponible | Fuera del alcance de esta versión: el estado del laboratorio no se muestra en pantalla |
+| 10 | Reserva cancelada | Reserva con Estado "Cancelada" | No afecta la disponibilidad | Fuera del alcance de esta versión: los datos actuales solo incluyen reservas activas |
+
