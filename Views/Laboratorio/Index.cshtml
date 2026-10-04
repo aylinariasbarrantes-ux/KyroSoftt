@@ -1,10 +1,11 @@
 @model List<Laboratorio>
+
 @{
     ViewData["Title"] = "Laboratorios";
 
-    // Contadores para el resumen de la cabecera
     var total = Model.Count;
     var fueraDeServicio = 0;
+
     foreach (var laboratorio in Model)
     {
         if (string.Equals(laboratorio.Estado, "Fuera de servicio", StringComparison.OrdinalIgnoreCase))
@@ -15,24 +16,39 @@
 }
 
 <div class="mx-auto max-w-7xl space-y-8">
+
+    <a asp-controller="Home" asp-action="Index" class="group inline-flex h-10 items-center justify-center gap-2 rounded-md bg-brand-600 px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-md active:translate-y-0 active:scale-[0.98] dark:bg-brand-500 dark:hover:bg-brand-400">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5">
+            <path d="M15 18l-6-6 6-6" />
+        </svg>
+        Volver al inicio
+    </a>
+
     <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <p class="text-sm font-medium text-brand-600 dark:text-brand-300">Catálogo</p>
             <h1 class="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-100 sm:text-3xl">Laboratorios</h1>
             <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Consulta los laboratorios registrados y su estado actual.</p>
         </div>
+
         <span class="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true"><path d="M9 2h6" /><path d="M10 9h4" /><path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" /></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
+                <path d="M9 2h6" />
+                <path d="M10 9h4" />
+                <path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" />
+            </svg>
             @total en total
         </span>
     </section>
 
-    <section class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all dark:border-zinc-800 dark:bg-zinc-900 duration-300 ease-out hover:shadow-md">
+    <section class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 ease-out hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+
         <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
             <div>
                 <h2 class="text-sm font-semibold">Lista de laboratorios</h2>
                 <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">@total registrado(s) en el sistema.</p>
             </div>
+
             <span class="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300">
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                 @fueraDeServicio fuera de servicio
@@ -43,8 +59,13 @@
         {
             <div class="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
                 <div class="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true"><path d="M9 2h6" /><path d="M10 9h4" /><path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" /></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
+                        <path d="M9 2h6" />
+                        <path d="M10 9h4" />
+                        <path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" />
+                    </svg>
                 </div>
+
                 <h3 class="mt-4 text-sm font-medium">No hay laboratorios registrados</h3>
                 <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Los laboratorios aparecerán aquí en cuanto se agreguen al sistema.</p>
             </div>
@@ -56,32 +77,45 @@
 
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="border-b border-zinc-200 text-start text-xs uppercase tracking-tight text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                        <th scope="col" class="px-5 py-3 font-medium">Nombre</th>
-                        <th scope="col" class="px-5 py-3 font-medium">Ubicación</th>
-                        <th scope="col" class="px-5 py-3 font-medium">Capacidad</th>
-                        <th scope="col" class="px-5 py-3 font-medium">Estado</th>
+                    <tr class="border-b border-zinc-200 text-xs uppercase tracking-tight text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                        <th scope="col" class="px-5 py-3 text-start font-medium">Nombre</th>
+                        <th scope="col" class="px-5 py-3 text-start font-medium">Ubicación</th>
+                        <th scope="col" class="px-5 py-3 text-start font-medium">Capacidad</th>
+                        <th scope="col" class="px-5 py-3 text-start font-medium">Estado</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @foreach (var laboratorio in Model)
                     {
                         var esUltima = indice == ultimaFila;
                         indice++;
 
-                        var estaFuera = string.Equals(laboratorio.Estado, "Fuera de servicio", StringComparison.OrdinalIgnoreCase);
+                        var estaFuera = string.Equals(
+                        laboratorio.Estado,
+                        "Fuera de servicio",
+                        StringComparison.OrdinalIgnoreCase
+                        );
 
                         <tr class="@(esUltima ? "" : "border-b border-zinc-200 dark:border-zinc-800") align-middle transition-colors duration-200">
+
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-200">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true"><path d="M9 2h6" /><path d="M10 9h4" /><path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" /></svg>
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
+                                            <path d="M9 2h6" />
+                                            <path d="M10 9h4" />
+                                            <path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" />
+                                        </svg>
                                     </div>
+
                                     <span class="font-medium text-zinc-950 dark:text-zinc-100">@laboratorio.Nombre</span>
                                 </div>
                             </td>
+
                             <td class="px-5 py-4 text-zinc-600 dark:text-zinc-400">@laboratorio.Ubicacion</td>
-                            <td class="px-5 py-4 text-nowrap text-zinc-600 dark:text-zinc-400">@laboratorio.Capacidad personas</td>
+                            <td class="text-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-400">@laboratorio.Capacidad personas</td>
+
                             <td class="px-5 py-4">
                                 @if (estaFuera)
                                 {
@@ -92,16 +126,18 @@
                                 }
                                 else
                                 {
-                                    <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-900/70 dark:text-emerald-300">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950 dark:text-emerald-300">
                                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                                         Habilitado
                                     </span>
                                 }
                             </td>
+
                         </tr>
                     }
                 </tbody>
             </table>
         }
+
     </section>
 </div>
