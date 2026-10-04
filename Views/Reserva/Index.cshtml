@@ -1,0 +1,778 @@
+@model SistemaReservasLaboratorios.Models.ReservaCalendarioViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Reservas";
+    Layout = Model.EsAdministrador
+        ? "~/Views/Shared/_Layout.cshtml"
+        : "~/Views/Shared/_LayoutUsuario.cshtml";
+
+    var reservasJson = JsonSerializer.Serialize(
+        Model.Reservas,
+        new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+}
+
+<div class="mx-auto max-w-[1600px] space-y-6" id="reservasApp" data-selected-date="@Model.FechaSeleccionada">
+    <a asp-controller="Home" asp-action="Index" class="group inline-flex h-10 items-center justify-center gap-2 rounded-md bg-brand-600 px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-md dark:bg-brand-500 dark:hover:bg-brand-400 active:translate-y-0 active:scale-[0.98]">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5"><path d="M15 18l-6-6 6-6" /></svg>
+        Volver al inicio
+    </a>
+
+    <section class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <p class="text-sm font-medium text-brand-600 dark:text-brand-300">@(Model.EsAdministrador ? "Gestión de reservas" : "Consulta de reservas")</p>
+            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-100 sm:text-3xl">Calendario de reservas</h1>
+            <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">@(Model.EsAdministrador ? "Visualiza las reservas por día, semana, mes o año y filtra el calendario por laboratorio." : "Consulta los horarios ocupados por día, semana, mes o año. Por privacidad, únicamente verás el laboratorio y el horario de cada reserva.")</p>
+        </div>
+        <button type="button" id="calendarTodayButton" class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-100 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-800">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /></svg>
+            Hoy
+        </button>
+    </section>
+
+    <section>
+        <div class="rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div class="border-b border-zinc-200 px-4 py-4 dark:border-zinc-800 sm:px-6">
+                <h2 class="text-base font-semibold text-zinc-950 dark:text-zinc-100">Reservas programadas</h2>
+                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">@(Model.EsAdministrador ? "Si dos o más reservas coinciden en horario, se agrupan en una sola tarjeta para mantener el calendario legible." : "Las reservas se muestran únicamente con laboratorio y horario. Si varias coinciden, se agrupan en una sola tarjeta.")</p>
+            </div>
+
+            <div class="sticky z-20 border-b border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:px-6" style="top:72px;">
+                <div class="grid gap-3 xl:grid-cols-[260px_1fr_auto] xl:items-end">
+                    <div>
+                        <label for="calendarLaboratorioFilter" class="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500">Laboratorio</label>
+                        <select id="calendarLaboratorioFilter" class="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium text-zinc-700 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
+                            <option value="all">Todos</option>
+                            @foreach (var laboratorio in Model.Laboratorios)
+                            {
+                                <option value="@laboratorio.Id">@laboratorio.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <p class="mb-1.5 text-xs font-medium uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500">Vista</p>
+                        <div class="calendar-view-selector inline-flex w-full rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-950">
+                            <button type="button" data-view="day" class="calendar-view-btn flex-1 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">Día</button>
+                            <button type="button" data-view="week" class="calendar-view-btn flex-1 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">Semana</button>
+                            <button type="button" data-view="month" class="calendar-view-btn flex-1 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">Mes</button>
+                            <button type="button" data-view="year" class="calendar-view-btn flex-1 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">Año</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="mb-1.5 text-xs font-medium uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500">Periodo</p>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="calendarPrevButton" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" aria-label="Periodo anterior">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="m15 18-6-6 6-6" /></svg>
+                            </button>
+                            <div class="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-950 sm:min-w-[220px]">
+                                <p id="calendarPeriodLabel" class="truncate text-sm font-semibold text-zinc-950 dark:text-zinc-100"></p>
+                            </div>
+                            <button type="button" id="calendarNextButton" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" aria-label="Periodo siguiente">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="m9 18 6-6-6-6" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-6">
+                <div id="calendarViewContainer" class="space-y-6"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Modal de una reserva individual -->
+<div id="reservationModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+    <div class="relative w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="flex items-start justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+            <div>
+                <p class="text-sm font-medium text-brand-600 dark:text-brand-300">Detalle de la reserva</p>
+                <h3 id="modalReservationTitle" class="mt-1 text-lg font-semibold text-zinc-950 dark:text-zinc-100"></h3>
+            </div>
+            <button type="button" id="closeReservationModal" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-400 transition-all duration-200 hover:rotate-90 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label="Cerrar modal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            </button>
+        </div>
+
+        <div class="space-y-4 px-6 py-5">
+            <!-- Información visible para todos los usuarios -->
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                    <p class="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Laboratorio</p>
+                    <p id="modalReservationLaboratorio" class="mt-2 text-sm font-semibold text-zinc-950 dark:text-zinc-100"></p>
+                </div>
+                <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                    <p class="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Horario</p>
+                    <p class="mt-2 text-sm font-semibold text-zinc-950 dark:text-zinc-100">
+                        <span id="modalReservationHoraInicio"></span>
+                        <span class="mx-1 text-zinc-400">–</span>
+                        <span id="modalReservationHoraFin"></span>
+                    </p>
+                </div>
+            </div>
+
+            @if (Model.EsAdministrador)
+            {
+                <!-- Información administrativa: no se renderiza para usuarios regulares -->
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                        <p class="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Responsable</p>
+                        <p id="modalReservationResponsable" class="mt-2 text-sm font-semibold text-zinc-950 dark:text-zinc-100"></p>
+                    </div>
+                    <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                        <p class="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Estado</p>
+                        <p id="modalReservationEstado" class="mt-2 text-sm font-semibold text-zinc-950 dark:text-zinc-100"></p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                    <div>
+                        <p class="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Fecha</p>
+                        <p id="modalReservationFecha" class="mt-1 text-sm text-zinc-700 dark:text-zinc-300"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Ubicación</p>
+                        <p id="modalReservationUbicacion" class="mt-1 text-sm text-zinc-700 dark:text-zinc-300"></p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal para reservas que coinciden en horario -->
+<div id="conflictModal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+    <div class="relative max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="flex items-start justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800 sm:px-6">
+            <div>
+                <p class="text-sm font-medium text-amber-600 dark:text-amber-300">Coincidencia de horarios</p>
+                <h3 id="conflictModalTitle" class="mt-1 text-lg font-semibold text-zinc-950 dark:text-zinc-100">Reservas en el mismo rango horario</h3>
+                <p id="conflictModalSubtitle" class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"></p>
+            </div>
+            <button type="button" id="closeConflictModal" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-all hover:rotate-90 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label="Cerrar modal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            </button>
+        </div>
+        <div id="conflictModalList" class="max-h-[65vh] space-y-3 overflow-y-auto p-5 sm:p-6"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const rawReservations = @Html.Raw(reservasJson);
+            const isAdmin = @Model.EsAdministrador.ToString().ToLowerInvariant();
+            const app = document.getElementById("reservasApp");
+            const calendarViewContainer = document.getElementById("calendarViewContainer");
+            const periodLabel = document.getElementById("calendarPeriodLabel");
+            const prevButton = document.getElementById("calendarPrevButton");
+            const nextButton = document.getElementById("calendarNextButton");
+            const todayButton = document.getElementById("calendarTodayButton");
+            const laboratoryFilter = document.getElementById("calendarLaboratorioFilter");
+            const viewButtons = [...document.querySelectorAll(".calendar-view-btn")];
+
+            const reservationModal = document.getElementById("reservationModal");
+            const closeReservationModalButton = document.getElementById("closeReservationModal");
+            const conflictModal = document.getElementById("conflictModal");
+            const closeConflictModalButton = document.getElementById("closeConflictModal");
+            const conflictModalList = document.getElementById("conflictModalList");
+            const conflictModalSubtitle = document.getElementById("conflictModalSubtitle");
+
+            const HOURS_START = 7;
+            const HOURS_END = 21;
+            const HOUR_HEIGHT = 72;
+            const DAY_NAMES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+            const today = normalizeDate(new Date());
+
+            const reservations = rawReservations.map((item, index) => ({
+                ...item,
+                id: item.id,
+                color: colorByIndex(index),
+                date: normalizeDate(new Date(`${item.fecha}T00:00:00`)),
+                startMinutes: toMinutes(item.horaInicio),
+                endMinutes: toMinutes(item.horaFin)
+            }));
+
+            const state = {
+                view: "week",
+                selectedDate: app.dataset.selectedDate ? normalizeDate(new Date(`${app.dataset.selectedDate}T00:00:00`)) : today,
+                cursorDate: app.dataset.selectedDate ? normalizeDate(new Date(`${app.dataset.selectedDate}T00:00:00`)) : today,
+                laboratorioId: "all"
+            };
+
+            const formatters = {
+                longDate: new Intl.DateTimeFormat("es-CR", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
+                shortDate: new Intl.DateTimeFormat("es-CR", { day: "numeric", month: "short", year: "numeric" }),
+                monthYear: new Intl.DateTimeFormat("es-CR", { month: "long", year: "numeric" }),
+                weekdayShort: new Intl.DateTimeFormat("es-CR", { weekday: "short" }),
+                monthShort: new Intl.DateTimeFormat("es-CR", { month: "short" })
+            };
+
+            function normalizeDate(date) {
+                return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            }
+
+            function sameDay(a, b) {
+                return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+            }
+
+            function toMinutes(time) {
+                const [hours, minutes] = time.split(":").map(Number);
+                return hours * 60 + minutes;
+            }
+
+            function toIsoDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                return `${year}-${month}-${day}`;
+            }
+
+            function addDays(date, amount) {
+                const result = new Date(date);
+                result.setDate(result.getDate() + amount);
+                return normalizeDate(result);
+            }
+
+            function startOfWeek(date) {
+                const result = normalizeDate(date);
+                const day = result.getDay();
+                const diff = day === 0 ? -6 : 1 - day;
+                result.setDate(result.getDate() + diff);
+                return normalizeDate(result);
+            }
+
+            function startOfMonth(date) {
+                return new Date(date.getFullYear(), date.getMonth(), 1);
+            }
+
+            function capitalize(text) {
+                return text.charAt(0).toUpperCase() + text.slice(1);
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? "")
+                    .replaceAll("&", "&amp;")
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;")
+                    .replaceAll('"', "&quot;")
+                    .replaceAll("'", "&#039;");
+            }
+
+            function colorByIndex(index) {
+                const colors = [
+                    { card: "bg-brand-50 border-brand-200 text-brand-900 dark:bg-brand-950 dark:border-brand-900 dark:text-brand-200", accent: "bg-brand-500" },
+                    { card: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-100", accent: "bg-emerald-500" },
+                    { card: "bg-violet-50 border-violet-200 text-violet-900 dark:bg-violet-950/40 dark:border-violet-900 dark:text-violet-100", accent: "bg-violet-500" },
+                    { card: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-100", accent: "bg-amber-500" },
+                    { card: "bg-cyan-50 border-cyan-200 text-cyan-900 dark:bg-cyan-950/40 dark:border-cyan-900 dark:text-cyan-100", accent: "bg-cyan-500" }
+                ];
+                return colors[index % colors.length];
+            }
+
+            function getReservationsForDate(date) {
+                return reservations
+                    .filter(reserva => sameDay(reserva.date, date))
+                    .filter(reserva => state.laboratorioId === "all" || String(reserva.laboratorioId) === state.laboratorioId)
+                    .sort((a, b) => a.startMinutes - b.startMinutes || a.endMinutes - b.endMinutes);
+            }
+
+            // Agrupa únicamente las reservas cuyos rangos realmente se intersectan.
+            // Un grupo con 2 o más elementos se muestra como una sola tarjeta de coincidencia.
+            function groupOverlappingReservations(items) {
+                if (!items.length) return [];
+
+                const sorted = [...items].sort((a, b) => a.startMinutes - b.startMinutes || a.endMinutes - b.endMinutes);
+                const groups = [];
+                let current = [];
+                let currentEnd = -1;
+
+                const flush = () => {
+                    if (!current.length) return;
+                    groups.push({
+                        type: current.length > 1 ? "conflict" : "single",
+                        items: current,
+                        startMinutes: Math.min(...current.map(item => item.startMinutes)),
+                        endMinutes: Math.max(...current.map(item => item.endMinutes))
+                    });
+                    current = [];
+                    currentEnd = -1;
+                };
+
+                sorted.forEach(item => {
+                    if (current.length && item.startMinutes >= currentEnd) {
+                        flush();
+                    }
+                    current.push(item);
+                    currentEnd = Math.max(currentEnd, item.endMinutes);
+                });
+
+                flush();
+                return groups;
+            }
+
+            function getWeekDates(baseDate) {
+                const start = startOfWeek(baseDate);
+                return Array.from({ length: 7 }, (_, index) => addDays(start, index));
+            }
+
+            function getMonthMatrix(baseDate) {
+                const firstDayOfMonth = startOfMonth(baseDate);
+                const monthStart = startOfWeek(firstDayOfMonth);
+                return Array.from({ length: 42 }, (_, index) => addDays(monthStart, index));
+            }
+
+            function buildTimelineRows() {
+                return Array.from({ length: HOURS_END - HOURS_START }, (_, index) => HOURS_START + index);
+            }
+
+            function formatTime12(time) {
+                const [hourText, minuteText] = time.split(":");
+                const hour24 = Number(hourText);
+                const hour12 = hour24 % 12 || 12;
+                const period = hour24 >= 12 ? "p. m." : "a. m.";
+                return `${hour12}:${minuteText} ${period}`;
+            }
+
+            function formatMinutes12(totalMinutes) {
+                const hour = Math.floor(totalMinutes / 60);
+                const minute = totalMinutes % 60;
+                return formatTime12(`${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`);
+            }
+
+            function timeLabel(hour) {
+                const period = hour >= 12 ? "p. m." : "a. m.";
+                const hour12 = hour % 12 || 12;
+                return `${hour12}:00 ${period}`;
+            }
+
+            function groupPositionStyle(group) {
+                const startOffset = ((group.startMinutes - HOURS_START * 60) / 60) * HOUR_HEIGHT;
+                const durationMinutes = Math.max(group.endMinutes - group.startMinutes, 30);
+                const height = (durationMinutes / 60) * HOUR_HEIGHT;
+                return `top:${Math.max(startOffset, 0)}px;height:${Math.max(height, 50)}px;left:4px;width:calc(100% - 8px);`;
+            }
+
+            function renderTimelineGroup(group, compact = false) {
+                if (group.type === "conflict") {
+                    const ids = group.items.map(item => item.id).join(",");
+                    const count = group.items.length;
+                    return `<button type="button" data-conflict-ids="${ids}" class="absolute overflow-hidden rounded-xl border border-amber-300 bg-amber-50 ${compact ? "px-2.5" : "px-3"} py-2 text-left text-amber-950 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-md dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100" style="${groupPositionStyle(group)}">
+                        <span class="absolute inset-y-0 left-0 w-1 bg-amber-500"></span>
+                        <div class="pl-2">
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.12em] opacity-75">${formatMinutes12(group.startMinutes)} - ${formatMinutes12(group.endMinutes)}</p>
+                            <p class="mt-1 ${compact ? "text-xs" : "text-sm"} font-semibold">${count} reservas coinciden</p>
+                            <p class="mt-0.5 text-[11px] opacity-80">Haz clic para verlas</p>
+                        </div>
+                    </button>`;
+                }
+
+                const item = group.items[0];
+                return `<button type="button" data-reservation-id="${item.id}" data-date="${item.fecha}" class="absolute overflow-hidden rounded-xl border ${compact ? "px-2.5" : "px-3"} py-2 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${item.color.card}" style="${groupPositionStyle(group)}">
+                    <span class="absolute inset-y-0 left-0 w-1 ${item.color.accent}"></span>
+                    <div class="pl-2">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.12em] opacity-70">${formatTime12(item.horaInicio)} - ${formatTime12(item.horaFin)}</p>
+                        <p class="mt-1 ${compact ? "line-clamp-1 text-xs" : "text-sm"} font-semibold">${escapeHtml(item.laboratorioNombre)}</p>
+                        ${isAdmin ? `<p class="mt-0.5 line-clamp-1 text-[11px] opacity-80">${escapeHtml(item.responsable)}</p>` : ""}
+                    </div>
+                </button>`;
+            }
+
+            function renderDayView() {
+                const groups = groupOverlappingReservations(getReservationsForDate(state.cursorDate));
+                const rows = buildTimelineRows();
+                const timelineHeight = (HOURS_END - HOURS_START) * HOUR_HEIGHT;
+                const isToday = sameDay(today, state.cursorDate);
+
+                const cards = groups.length
+                    ? groups.map(group => renderTimelineGroup(group)).join("")
+                    : `<div class="absolute inset-0 flex items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">No hay reservas para este día con el filtro seleccionado.</div>`;
+
+                const headerClasses = isToday
+                    ? "bg-brand-600 text-white hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400"
+                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800/70";
+
+                return `<div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                    <div class="grid grid-cols-[80px_minmax(0,1fr)] border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
+                        <div class="px-3 py-4 text-xs font-medium uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Hora</div>
+                        <button type="button" data-select-date="${toIsoDate(state.cursorDate)}" class="flex flex-col px-4 py-4 text-left transition-colors ${headerClasses}">
+                            <span class="text-xs font-medium uppercase tracking-[0.18em] ${isToday ? "text-white/80" : "text-zinc-400 dark:text-zinc-500"}">${formatters.weekdayShort.format(state.cursorDate)}${isToday ? " · Hoy" : ""}</span>
+                            <span class="mt-1 text-base font-semibold ${isToday ? "text-white" : "text-zinc-950 dark:text-zinc-100"}">${formatters.longDate.format(state.cursorDate)}</span>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-[80px_minmax(0,1fr)]">
+                        <div class="border-r border-zinc-200 dark:border-zinc-800">
+                            ${rows.map(hour => `<div class="flex h-[72px] items-start justify-end border-b border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">${timeLabel(hour)}</div>`).join("")}
+                        </div>
+                        <div class="relative" style="height:${timelineHeight}px;">
+                            ${rows.map((_, index) => `<div class="absolute inset-x-0 border-b border-dashed border-zinc-200 dark:border-zinc-800" style="top:${index * HOUR_HEIGHT}px;"></div>`).join("")}
+                            ${cards}
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            function renderMobileGroup(group) {
+                if (group.type === "conflict") {
+                    const ids = group.items.map(item => item.id).join(",");
+                    return `<button type="button" data-conflict-ids="${ids}" class="relative w-full overflow-hidden rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-left text-amber-950 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
+                        <span class="absolute inset-y-0 left-0 w-1 bg-amber-500"></span>
+                        <div class="pl-2">
+                            <p class="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">${formatMinutes12(group.startMinutes)} - ${formatMinutes12(group.endMinutes)}</p>
+                            <p class="mt-1 text-sm font-semibold">${group.items.length} reservas coinciden</p>
+                            <p class="mt-1 text-xs opacity-80">Toca para ver el detalle de todas.</p>
+                        </div>
+                    </button>`;
+                }
+
+                const item = group.items[0];
+                return `<button type="button" data-reservation-id="${item.id}" data-date="${item.fecha}" class="relative w-full overflow-hidden rounded-xl border px-4 py-3 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${item.color.card}">
+                    <span class="absolute inset-y-0 left-0 w-1 ${item.color.accent}"></span>
+                    <div class="pl-2">
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] opacity-70">${formatTime12(item.horaInicio)} - ${formatTime12(item.horaFin)}</p>
+                        <p class="mt-1 truncate text-sm font-semibold">${escapeHtml(item.laboratorioNombre)}</p>
+                        ${isAdmin ? `<p class="mt-1 truncate text-xs opacity-80">${escapeHtml(item.responsable)}</p>` : ""}
+                    </div>
+                </button>`;
+            }
+
+            function renderMobileWeekView(dates) {
+                return `<div class="space-y-3">
+                    ${dates.map(date => {
+                        const groups = groupOverlappingReservations(getReservationsForDate(date));
+                        const totalReservations = groups.reduce((sum, group) => sum + group.items.length, 0);
+                        const isSelected = sameDay(state.selectedDate, date);
+                        const isToday = sameDay(today, date);
+
+                        return `<section class="overflow-hidden rounded-2xl border ${isToday ? "border-brand-300 bg-brand-50 dark:border-brand-700 dark:bg-brand-950" : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"}">
+                            <button type="button" data-select-date="${toIsoDate(date)}" class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/70">
+                                <div class="flex items-center gap-3">
+                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isToday ? "bg-brand-600 text-white dark:bg-brand-500" : isSelected ? "bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-200" : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"}">
+                                        <span class="text-sm font-semibold">${date.getDate()}</span>
+                                    </span>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-sm font-semibold text-zinc-950 dark:text-zinc-100">${capitalize(formatters.weekdayShort.format(date))}</p>
+                                            ${isToday ? `<span class="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-700 dark:bg-brand-950 dark:text-brand-200">Hoy</span>` : ""}
+                                        </div>
+                                        <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">${formatters.shortDate.format(date)}</p>
+                                    </div>
+                                </div>
+                                <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300">${totalReservations} reserva${totalReservations === 1 ? "" : "s"}</span>
+                            </button>
+                            <div class="border-t border-zinc-200 p-3 dark:border-zinc-800">
+                                ${groups.length ? `<div class="space-y-2">${groups.map(renderMobileGroup).join("")}</div>` : `<div class="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">Sin reservas para este día.</div>`}
+                            </div>
+                        </section>`;
+                    }).join("")}
+                </div>`;
+            }
+
+            function renderDesktopWeekView(dates) {
+                const rows = buildTimelineRows();
+                const timelineHeight = (HOURS_END - HOURS_START) * HOUR_HEIGHT;
+
+                return `<div class="overflow-x-auto">
+                    <div class="min-w-[980px] overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                        <div class="grid grid-cols-[80px_repeat(7,minmax(0,1fr))] border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
+                            <div class="px-3 py-4 text-xs font-medium uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Hora</div>
+                            ${dates.map(date => {
+                                const isToday = sameDay(today, date);
+                                const isSelected = sameDay(state.selectedDate, date);
+                                return `<button type="button" data-select-date="${toIsoDate(date)}" class="border-l border-zinc-200 px-3 py-4 text-left transition-colors dark:border-zinc-800 ${isToday ? "bg-brand-600 text-white hover:bg-brand-700 dark:bg-brand-500 dark:text-white dark:hover:bg-brand-400" : isSelected ? "bg-brand-50 text-brand-900 hover:bg-brand-100 dark:bg-brand-950 dark:text-brand-100 dark:hover:bg-brand-900" : "text-zinc-950 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800/70"}">
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-xs font-medium uppercase tracking-[0.18em] ${isToday ? "text-white/80" : isSelected ? "text-brand-600 dark:text-brand-300" : "text-zinc-400 dark:text-zinc-500"}">${DAY_NAMES[date.getDay()]}</p>
+                                        ${isToday ? `<span class="rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-white">Hoy</span>` : ""}
+                                    </div>
+                                    <p class="mt-1 text-base font-semibold ${isToday ? "text-white" : isSelected ? "text-brand-950 dark:text-brand-100" : "text-zinc-950 dark:text-zinc-100"}">${date.getDate()}</p>
+                                    <p class="mt-1 text-xs ${isToday ? "text-white/80" : isSelected ? "text-brand-700 dark:text-brand-300" : "text-zinc-500 dark:text-zinc-400"}">${formatters.monthShort.format(date)}</p>
+                                </button>`;
+                            }).join("")}
+                        </div>
+                        <div class="grid grid-cols-[80px_repeat(7,minmax(0,1fr))]">
+                            <div class="border-r border-zinc-200 dark:border-zinc-800">${rows.map(hour => `<div class="flex h-[72px] items-start justify-end border-b border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">${timeLabel(hour)}</div>`).join("")}</div>
+                            ${dates.map(date => {
+                                const groups = groupOverlappingReservations(getReservationsForDate(date));
+                                return `<div class="relative border-l border-zinc-200 dark:border-zinc-800" style="height:${timelineHeight}px;">${rows.map((_, index) => `<div class="absolute inset-x-0 border-b border-dashed border-zinc-200 dark:border-zinc-800" style="top:${index * HOUR_HEIGHT}px;"></div>`).join("")}${groups.map(group => renderTimelineGroup(group, true)).join("")}</div>`;
+                            }).join("")}
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            function renderWeekView() {
+                const dates = getWeekDates(state.cursorDate);
+                return window.innerWidth < 768 ? renderMobileWeekView(dates) : renderDesktopWeekView(dates);
+            }
+
+            function renderMonthGroup(group) {
+                if (group.type === "conflict") {
+                    const ids = group.items.map(item => item.id).join(",");
+                    return `<span data-conflict-ids="${ids}" class="flex cursor-pointer items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+                        <span class="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
+                        <span class="truncate">${group.items.length} reservas coinciden</span>
+                    </span>`;
+                }
+                const item = group.items[0];
+                return `<span data-reservation-id="${item.id}" data-date="${item.fecha}" class="flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5 text-xs ${item.color.card}">
+                    <span class="inline-block h-2 w-2 rounded-full ${item.color.accent}"></span>
+                    <span class="truncate">${formatTime12(item.horaInicio)} · ${escapeHtml(item.laboratorioNombre)}</span>
+                </span>`;
+            }
+
+            function renderMonthView() {
+                const matrix = getMonthMatrix(state.cursorDate);
+                const currentMonth = state.cursorDate.getMonth();
+                return `<div class="grid gap-2 sm:grid-cols-7">
+                    ${DAY_NAMES.map(name => `<div class="month-weekday-header hidden rounded-xl bg-zinc-50 px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400 dark:bg-zinc-950 dark:text-zinc-500 sm:block">${name}</div>`).join("")}
+                    ${matrix.map(date => {
+                        const groups = groupOverlappingReservations(getReservationsForDate(date));
+                        const total = groups.reduce((sum, group) => sum + group.items.length, 0);
+                        const isCurrentMonth = date.getMonth() === currentMonth;
+                        const isToday = sameDay(today, date);
+                        const isSelected = sameDay(state.selectedDate, date);
+                        return `<div data-date-cell="${toIsoDate(date)}"
+                                     data-select-date="${toIsoDate(date)}"
+                                     role="button"
+                                     tabindex="0"
+                                     aria-label="Ver el día ${formatters.longDate.format(date)}"
+                                     class="flex min-h-[135px] cursor-pointer flex-col rounded-2xl border px-3 py-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 ${isToday ? "border-brand-400 bg-brand-50 dark:border-brand-700 dark:bg-brand-950" : isSelected ? "border-brand-300 bg-brand-50/60 dark:border-brand-800 dark:bg-brand-950/20" : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"} ${isCurrentMonth ? "" : "opacity-60"}">
+                            <div class="flex items-center justify-between text-left">
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${isToday ? "bg-brand-600 text-white dark:bg-brand-500" : "text-zinc-700 dark:text-zinc-200"}">${date.getDate()}</span>
+                                ${total ? `<span class="rounded-full bg-zinc-100 px-2 py-1 text-[11px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300">${total} reserva${total === 1 ? "" : "s"}</span>` : ""}
+                            </div>
+                            <div class="mt-3 space-y-2">${groups.slice(0, 2).map(renderMonthGroup).join("")}${groups.length > 2 ? `<span class="block text-xs text-zinc-500 dark:text-zinc-400">+ ${groups.length - 2} grupo${groups.length - 2 === 1 ? "" : "s"} más</span>` : ""}</div>
+                        </div>`;
+                    }).join("")}
+                </div>`;
+            }
+
+            function renderMiniMonth(monthDate) {
+                const first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+                const days = getMonthMatrix(first).slice(0, 42);
+                const currentMonth = first.getMonth();
+                return `<div class="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+                    <div class="mb-3 flex items-center justify-between"><h3 class="text-sm font-semibold text-zinc-950 dark:text-zinc-100">${formatters.monthYear.format(first)}</h3></div>
+                    <div class="mb-2 grid grid-cols-7 gap-1">${DAY_NAMES.map(day => `<div class="text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">${day[0]}</div>`).join("")}</div>
+                    <div class="grid grid-cols-7 gap-1">${days.map(date => {
+                        const hasReservations = getReservationsForDate(date).length > 0;
+                        const isCurrentMonth = date.getMonth() === currentMonth;
+                        const isToday = sameDay(date, today);
+                        return `<button type="button" data-select-date="${toIsoDate(date)}" class="relative flex aspect-square items-center justify-center rounded-lg text-xs transition-colors ${isToday ? "bg-brand-600 text-white dark:bg-brand-500" : isCurrentMonth ? "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800" : "text-zinc-300 dark:text-zinc-700"}">${date.getDate()}${hasReservations ? `<span class="absolute bottom-1 h-1.5 w-1.5 rounded-full ${isToday ? "bg-white" : "bg-brand-500"}"></span>` : ""}</button>`;
+                    }).join("")}</div>
+                </div>`;
+            }
+
+            function renderYearView() {
+                return `<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">${Array.from({ length: 12 }, (_, index) => renderMiniMonth(new Date(state.cursorDate.getFullYear(), index, 1))).join("")}</div>`;
+            }
+
+            function getPeriodLabel() {
+                if (state.view === "day") return capitalize(formatters.longDate.format(state.cursorDate));
+                if (state.view === "week") {
+                    const weekStart = startOfWeek(state.cursorDate);
+                    const weekEnd = addDays(weekStart, 6);
+                    return `${formatters.shortDate.format(weekStart)} - ${formatters.shortDate.format(weekEnd)}`;
+                }
+                if (state.view === "month") return capitalize(formatters.monthYear.format(state.cursorDate));
+                return String(state.cursorDate.getFullYear());
+            }
+
+            function renderCalendar() {
+                viewButtons.forEach(button => {
+                    const active = button.dataset.view === state.view;
+                    button.classList.toggle("bg-white", active);
+                    button.classList.toggle("text-zinc-950", active);
+                    button.classList.toggle("shadow-sm", active);
+                    button.classList.toggle("dark:bg-zinc-900", active);
+                    button.classList.toggle("dark:text-zinc-100", active);
+                    button.classList.toggle("text-zinc-600", !active);
+                    button.classList.toggle("dark:text-zinc-400", !active);
+                });
+
+                periodLabel.textContent = getPeriodLabel();
+                calendarViewContainer.innerHTML = state.view === "day"
+                    ? renderDayView()
+                    : state.view === "week"
+                        ? renderWeekView()
+                        : state.view === "month"
+                            ? renderMonthView()
+                            : renderYearView();
+
+                wireCalendarInteractions();
+            }
+
+            function movePeriod(direction) {
+                if (state.view === "day") state.cursorDate = addDays(state.cursorDate, direction);
+                else if (state.view === "week") state.cursorDate = addDays(state.cursorDate, direction * 7);
+                else if (state.view === "month") state.cursorDate = new Date(state.cursorDate.getFullYear(), state.cursorDate.getMonth() + direction, 1);
+                else state.cursorDate = new Date(state.cursorDate.getFullYear() + direction, 0, 1);
+                renderCalendar();
+            }
+
+            function wireCalendarInteractions() {
+                calendarViewContainer.querySelectorAll("[data-select-date]").forEach(button => {
+                    const selectDate = event => {
+                        event.stopPropagation();
+                        const nextDate = normalizeDate(new Date(`${button.dataset.selectDate}T00:00:00`));
+                        const currentView = state.view;
+                        state.selectedDate = nextDate;
+
+                        if (currentView === "month") {
+                            state.view = "day";
+                            state.cursorDate = nextDate;
+                        } else if (currentView === "year") {
+                            state.view = "month";
+                            state.cursorDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), 1);
+                        } else {
+                            state.cursorDate = nextDate;
+                        }
+                        renderCalendar();
+                    };
+
+                    button.addEventListener("click", selectDate);
+
+                    if (button.getAttribute("role") === "button") {
+                        button.addEventListener("keydown", event => {
+                            if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                selectDate(event);
+                            }
+                        });
+                    }
+                });
+
+                calendarViewContainer.querySelectorAll("[data-reservation-id]").forEach(button => button.addEventListener("click", event => {
+                    event.stopPropagation();
+                    openReservationModal(Number(button.dataset.reservationId), button.dataset.date);
+                }));
+
+                calendarViewContainer.querySelectorAll("[data-conflict-ids]").forEach(button => button.addEventListener("click", event => {
+                    event.stopPropagation();
+                    const ids = button.dataset.conflictIds.split(",").map(Number).filter(Number.isFinite);
+                    openConflictModal(ids);
+                }));
+            }
+
+            function openReservationModal(reservationId, dateString) {
+                const reservation = reservations.find(item => item.id === reservationId && item.fecha === dateString)
+                    ?? reservations.find(item => item.id === reservationId);
+                if (!reservation) return;
+
+                document.getElementById("modalReservationTitle").textContent = reservation.laboratorioNombre;
+                document.getElementById("modalReservationHoraInicio").textContent = formatTime12(reservation.horaInicio);
+                document.getElementById("modalReservationHoraFin").textContent = formatTime12(reservation.horaFin);
+                document.getElementById("modalReservationLaboratorio").textContent = reservation.laboratorioNombre;
+
+                if (isAdmin) {
+                    document.getElementById("modalReservationResponsable").textContent = reservation.responsable;
+                    document.getElementById("modalReservationEstado").textContent = reservation.estado;
+                    document.getElementById("modalReservationFecha").textContent = capitalize(formatters.longDate.format(reservation.date));
+                    document.getElementById("modalReservationUbicacion").textContent = reservation.laboratorioUbicacion || "No definida";
+                }
+
+                reservationModal.classList.remove("hidden");
+                reservationModal.classList.add("flex");
+                document.body.classList.add("overflow-hidden");
+            }
+
+            function openConflictModal(ids) {
+                const items = reservations
+                    .filter(item => ids.includes(item.id))
+                    .sort((a, b) => a.startMinutes - b.startMinutes || a.endMinutes - b.endMinutes);
+
+                if (!items.length) return;
+
+                conflictModalSubtitle.textContent = isAdmin
+                    ? `${items.length} reservas coinciden el ${formatters.shortDate.format(items[0].date)}.`
+                    : `${items.length} reservas coinciden en este rango horario.`;
+                conflictModalList.innerHTML = items.map((item, index) => `
+                    <article class="relative overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                        <span class="absolute inset-y-0 left-0 w-1 ${item.color.accent}"></span>
+                        <div class="pl-2">
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">Reserva ${index + 1}</p>
+                                    <h4 class="mt-1 text-sm font-semibold text-zinc-950 dark:text-zinc-100">${escapeHtml(item.laboratorioNombre)}</h4>
+                                </div>
+                                <span class="inline-flex w-fit rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700 shadow-sm dark:bg-zinc-900 dark:text-zinc-200">${formatTime12(item.horaInicio)} - ${formatTime12(item.horaFin)}</span>
+                            </div>
+                            ${isAdmin ? `
+                                <div class="mt-3 grid gap-2 text-sm text-zinc-600 dark:text-zinc-300 sm:grid-cols-2">
+                                    <p><span class="font-medium text-zinc-900 dark:text-zinc-100">Responsable:</span> ${escapeHtml(item.responsable)}</p>
+                                    <p><span class="font-medium text-zinc-900 dark:text-zinc-100">Estado:</span> ${escapeHtml(item.estado)}</p>
+                                    <p class="sm:col-span-2"><span class="font-medium text-zinc-900 dark:text-zinc-100">Ubicación:</span> ${escapeHtml(item.laboratorioUbicacion || "No definida")}</p>
+                                </div>` : ""}
+                        </div>
+                    </article>`).join("");
+
+                conflictModal.classList.remove("hidden");
+                conflictModal.classList.add("flex");
+                document.body.classList.add("overflow-hidden");
+            }
+
+            function closeReservationModal() {
+                reservationModal.classList.add("hidden");
+                reservationModal.classList.remove("flex");
+                document.body.classList.remove("overflow-hidden");
+            }
+
+            function closeConflictModal() {
+                conflictModal.classList.add("hidden");
+                conflictModal.classList.remove("flex");
+                document.body.classList.remove("overflow-hidden");
+            }
+
+            prevButton.addEventListener("click", () => movePeriod(-1));
+            nextButton.addEventListener("click", () => movePeriod(1));
+
+            todayButton.addEventListener("click", () => {
+                state.view = "day";
+                state.selectedDate = today;
+                state.cursorDate = today;
+                renderCalendar();
+            });
+
+            laboratoryFilter.addEventListener("change", () => {
+                state.laboratorioId = laboratoryFilter.value;
+                renderCalendar();
+            });
+
+            viewButtons.forEach(button => button.addEventListener("click", () => {
+                state.view = button.dataset.view;
+                if (state.view === "day" || state.view === "week") state.cursorDate = state.selectedDate;
+                else if (state.view === "month") state.cursorDate = new Date(state.selectedDate.getFullYear(), state.selectedDate.getMonth(), 1);
+                else state.cursorDate = new Date(state.selectedDate.getFullYear(), 0, 1);
+                renderCalendar();
+            }));
+
+            let lastWeekLayoutIsMobile = window.innerWidth < 768;
+            window.addEventListener("resize", () => {
+                const isMobile = window.innerWidth < 768;
+                if (state.view === "week" && isMobile !== lastWeekLayoutIsMobile) {
+                    lastWeekLayoutIsMobile = isMobile;
+                    renderCalendar();
+                } else {
+                    lastWeekLayoutIsMobile = isMobile;
+                }
+            });
+
+            closeReservationModalButton.addEventListener("click", closeReservationModal);
+            reservationModal.addEventListener("click", event => { if (event.target === reservationModal) closeReservationModal(); });
+
+            closeConflictModalButton.addEventListener("click", closeConflictModal);
+            conflictModal.addEventListener("click", event => { if (event.target === conflictModal) closeConflictModal(); });
+
+            document.addEventListener("keydown", event => {
+                if (event.key !== "Escape") return;
+                if (!conflictModal.classList.contains("hidden")) closeConflictModal();
+                else if (!reservationModal.classList.contains("hidden")) closeReservationModal();
+            });
+
+            renderCalendar();
+        });
+    </script>
+}

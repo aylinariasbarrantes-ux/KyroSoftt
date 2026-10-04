@@ -98,6 +98,7 @@
                         </svg>
                         Inicio
                     </a>
+
                     <a asp-controller="Reserva" asp-action="Index" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors duration-200 @(string.Equals(controller, "Reserva", StringComparison.OrdinalIgnoreCase) ? "bg-brand-50 font-medium text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950 dark:text-brand-200 dark:ring-brand-900" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100")">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
                             <path d="M8 2v4" />
@@ -105,28 +106,8 @@
                             <rect width="18" height="18" x="3" y="4" rx="2" />
                             <path d="M3 10h18" />
                         </svg>
-                        Reservas
+                        Calendario
                     </a>
-                    <a asp-controller="Laboratorio" asp-action="Index" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors duration-200 @(string.Equals(controller, "Laboratorio", StringComparison.OrdinalIgnoreCase) ? "bg-brand-50 font-medium text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950 dark:text-brand-200 dark:ring-brand-900" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100")">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
-                            <path d="M9 2h6" />
-                            <path d="M10 9h4" />
-                            <path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" />
-                        </svg>
-                        Laboratorios
-                    </a>
-                    @if (string.Equals(rol, "Administrador", StringComparison.OrdinalIgnoreCase))
-                    {
-                        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-zinc-600 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                <circle cx="9" cy="7" r="4" />
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                            </svg>
-                            Usuarios
-                        </a>
-                    }
                 </nav>
 
                 <div class="border-t border-zinc-200 p-4 dark:border-zinc-800">

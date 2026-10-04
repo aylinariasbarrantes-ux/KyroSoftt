@@ -18,12 +18,28 @@ namespace SistemaReservasLaboratorios.Services
             _context = context;
         }
 
+        public List<Reserva> ObtenerReservasCalendario()
+        {
+            return _context.Reservas
+                .AsNoTracking()
+                .Include(r => r.Laboratorio)
+                .OrderBy(r => r.Fecha)
+                .ThenBy(r => r.HoraInicio)
+                .ToList();
+        }
+
         // Indica si un laboratorio puede reservarse en el rango [horaInicio, horaFin) de esa fecha.
         // Devuelve siempre un resultado con el motivo de un eventual rechazo.
         public DisponibilidadResultado ConsultarDisponibilidad(
             int laboratorioId, DateOnly fecha, TimeOnly horaInicio, TimeOnly horaFin)
         {
             // 1. El rango horario debe ser coherente
+            if (!EsIntervaloDeTreintaMinutos(horaInicio) || !EsIntervaloDeTreintaMinutos(horaFin))
+            {
+                return DisponibilidadResultado.NoDisponible(
+                    "Las horas deben estar en intervalos de 30 minutos (:00 o :30).");
+            }
+
             if (horaInicio >= horaFin)
             {
                 return DisponibilidadResultado.NoDisponible("El horario ingresado no es válido.");
@@ -45,7 +61,7 @@ namespace SistemaReservasLaboratorios.Services
             {
                 return DisponibilidadResultado.NoDisponible("El laboratorio no existe.");
             }
-
+ 
             // 4. Un laboratorio fuera de servicio no se consulta contra sus reservas
             if (laboratorio.Estado == EstadoFueraDeServicio)
             {
@@ -69,6 +85,11 @@ namespace SistemaReservasLaboratorios.Services
 
             // 6. Pasó todas las validaciones
             return DisponibilidadResultado.Libre();
+        }
+
+        private static bool EsIntervaloDeTreintaMinutos(TimeOnly hora)
+        {
+            return hora.Minute == 0 || hora.Minute == 30;
         }
     }
 }

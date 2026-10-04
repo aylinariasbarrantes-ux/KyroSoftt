@@ -15,14 +15,58 @@ namespace SistemaReservasLaboratorios.Controllers
         private const string FormatoHora = "HH:mm";
 
         private readonly ReservaService _reservaService;
+        private readonly LaboratorioService _laboratorioService;
 
-        public ReservaController(ReservaService reservaService)
+        public ReservaController(ReservaService reservaService, LaboratorioService laboratorioService)
         {
             _reservaService = reservaService;
+            _laboratorioService = laboratorioService;
         }
 
-        // GET: consulta si un laboratorio está libre en el rango indicado.
-        // Devuelve JSON porque aún no existe la vista de reservas.
+        // El calendario puede verlo cualquier usuario autenticado.
+        // Los usuarios regulares reciben únicamente laboratorio y horario;
+        // los datos administrativos no se envían al navegador.
+        [HttpGet]
+        public IActionResult Index()
+        {
+            var hoy = DateOnly.FromDateTime(DateTime.Today);
+            var rol = HttpContext.Session.GetString("Rol");
+            var esAdministrador = string.Equals(rol, "Administrador", StringComparison.OrdinalIgnoreCase);
+
+            var model = new ReservaCalendarioViewModel
+            {
+                EsAdministrador = esAdministrador,
+                FechaSeleccionada = hoy.ToString(FormatoFecha),
+                Laboratorios = _laboratorioService.ListarLaboratorios()
+                    .Select(l => new ReservaCalendarioLaboratorioViewModel
+                    {
+                        Id = l.Id,
+                        Nombre = l.Nombre
+                    })
+                    .ToList(),
+                Reservas = _reservaService.ObtenerReservasCalendario()
+                    .Select(r => new ReservaCalendarioItemViewModel
+                    {
+                        Id = r.Id,
+                        LaboratorioId = r.LaboratorioId,
+                        LaboratorioNombre = r.Laboratorio?.Nombre ?? $"Laboratorio {r.LaboratorioId}",
+                        // Para usuarios regulares estos campos se dejan vacíos a propósito,
+                        // para que no puedan recuperarlos inspeccionando el HTML o JavaScript.
+                        LaboratorioUbicacion = esAdministrador ? (r.Laboratorio?.Ubicacion ?? string.Empty) : string.Empty,
+                        Responsable = esAdministrador ? r.Responsable : string.Empty,
+                        Fecha = r.Fecha.ToString(FormatoFecha),
+                        HoraInicio = r.HoraInicio.ToString(FormatoHora),
+                        HoraFin = r.HoraFin.ToString(FormatoHora),
+                        Estado = esAdministrador ? r.Estado : string.Empty
+                    })
+                    .ToList()
+            };
+
+            return View(model);
+        }
+
+        // Este endpoint sí está disponible para cualquier usuario autenticado,
+        // porque el Home del usuario regular lo utiliza para consultar disponibilidad.
         [HttpGet]
         public IActionResult ConsultarDisponibilidad(
             int laboratorioId, string fecha, string horaInicio, string horaFin)
@@ -52,6 +96,17 @@ namespace SistemaReservasLaboratorios.Controllers
             if (!TimeOnly.TryParseExact(horaFin, FormatoHora, CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out var finParseado))
             {
+                return BadRequest(DisponibilidadResultado.NoDisponible($"La hora de fin no es válida. Usa el formato {FormatoHora}."));
+            }
+
+            if (!EsIntervaloDeTreintaMinutos(inicioParseado) || !EsIntervaloDeTreintaMinutos(finParseado))
+            {
+                return BadRequest(DisponibilidadResultado.NoDisponible(
+                    "Las horas deben seleccionarse en intervalos de 30 minutos (:00 o :30)."));
+            }
+
+            if (inicioParseado >= finParseado)
+            {
                 return BadRequest(DisponibilidadResultado.NoDisponible(
                     $"La hora de fin no es válida. Usa el formato {FormatoHora}."));
             }
@@ -60,6 +115,11 @@ namespace SistemaReservasLaboratorios.Controllers
                 laboratorioId, fechaParseada, inicioParseado, finParseado);
 
             return Ok(resultado);
+        }
+
+        private static bool EsIntervaloDeTreintaMinutos(TimeOnly hora)
+        {
+            return hora.Minute == 0 || hora.Minute == 30;
         }
     }
 }

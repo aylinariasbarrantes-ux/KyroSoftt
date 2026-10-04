@@ -362,3 +362,19 @@ a {
         background-color: #09090b;
     }
 }
+/* KyroSoft calendar responsive helpers */
+@media (max-width: 639px) {
+    .month-weekday-header {
+        display: none !important;
+    }
+}
+
+@media (min-width: 640px) {
+    .calendar-view-selector {
+        width: auto !important;
+    }
+
+    .calendar-view-selector .calendar-view-btn {
+        flex: none !important;
+    }
+}
