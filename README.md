@@ -72,3 +72,25 @@ Pruebas realizadas para HU-1 - Inicio de sesión:
 | 3 | Contraseña incorrecta | admin / contraseña errónea | Mensaje "Usuario o contraseña incorrectos." | Correcto |
 | 4 | Usuario inexistente | noexiste / admin123 | Mensaje "Usuario o contraseña incorrectos." | Correcto |
 | 5 | Campos vacíos | (vacío) / (vacío) | Mensaje "Debe ingresar usuario y contraseña." | Correcto |
+
+
+Pruebas realizadas para HU-2 - Listar laboratorios:
+
+| # | Prueba | Datos | Resultado esperado | Resultado obtenido |
+|---|--------|-------|---------------------|---------------------|
+| 1 | La lista muestra los laboratorios | Pantalla /Reserva, selector de laboratorio | Se ven Laboratorio A, B y C | Correcto |
+| 2 | Datos del laboratorio correctos | Detalle de reserva y coincidencia de horarios | Se ven nombre, ubicación y capacidad | Parcial: se ven nombre y ubicación; la capacidad no se muestra |
+| 3 | Estado del laboratorio visible | Comparar los 3 laboratorios | Se distingue "Habilitado" de "Fuera de servicio" | Pendiente: el estado del laboratorio no se muestra en la pantalla |
+| 4 | Selección de laboratorio | Cambiar de Laboratorio A a B y a C | El calendario cambia al laboratorio elegido | Correcto |
+
+Pruebas realizadas para HU-3 - Consultar disponibilidad:
+
+| # | Prueba | Datos | Resultado esperado | Resultado obtenido |
+|---|--------|-------|---------------------|---------------------|
+| 5 | Horario válido y disponible | Lab B, 04/10/2026, 8:00 a 9:00 a. m. | Disponible | Pendiente: no existe formulario de consulta |
+| 6 | Horario con conflicto | Lab A, 04/10/2026, 2:00 a 3:00 p. m. | No disponible | Pendiente: no existe formulario de consulta |
+| 7 | Hora final antes que inicial | Inicio 2:00 p. m., fin 1:00 p. m. | Mensaje de error | Pendiente: no existe formulario de consulta |
+| 8 | Fecha anterior a hoy | 30/09/2026 | Mensaje de error | Pendiente: no existe formulario de consulta |
+| 9 | Laboratorio fuera de servicio | Laboratorio "Fuera de servicio", horario válido | Nunca disponible | Pendiente: el estado no es visible |
+| 10 | Reserva cancelada | Reserva con Estado "Cancelada" | No afecta la disponibilidad | Pendiente: no hay reservas canceladas cargadas |
+
