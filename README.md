@@ -74,23 +74,27 @@ Pruebas realizadas para HU-1 - Inicio de sesión:
 | 5 | Campos vacíos | (vacío) / (vacío) | Mensaje "Debe ingresar usuario y contraseña." | Correcto |
 
 
-Pruebas realizadas para HU-2 - Listar laboratorios:
+Pruebas realizadas para HU-2 - Visualizar laboratorios:
 
 | # | Prueba | Datos | Resultado esperado | Resultado obtenido |
 |---|--------|-------|---------------------|---------------------|
-| 1 | La lista muestra los laboratorios | Pantalla /Reserva, selector de laboratorio | Se ven Laboratorio A, B y C | Correcto: los 3 laboratorios aparecen en el selector |
-| 2 | Datos del laboratorio correctos | Detalle de reserva y aviso de coincidencia de horarios | Se ven los datos del laboratorio | Correcto: el administrador ve nombre, ubicación, responsable y estado de la reserva; usuario1 ve nombre y horario, según su perfil de solo consulta |
-| 3 | Estado del laboratorio visible | Comparar los 3 laboratorios | Se distingue "Habilitado" de "Fuera de servicio" | Fuera del alcance de esta versión: la pantalla muestra las reservas por laboratorio; el estado del laboratorio queda para una mejora futura |
-| 4 | Selección de laboratorio | Cambiar de Laboratorio A a B y a C | El calendario cambia al laboratorio elegido | Correcto: el calendario se actualiza con las reservas de cada laboratorio |
+| 1 | La lista muestra los laboratorios | Pantalla /Laboratorio | Se ven Laboratorio A, B y C | Correcto: los 3 laboratorios aparecen listados |
+| 2 | Datos del laboratorio correctos | Columnas de la tabla en /Laboratorio | Se ven nombre, ubicación, capacidad y estado | Correcto: cada fila muestra los 4 datos |
+| 3 | Estado del laboratorio visible | Comparar los 3 laboratorios | Se distingue "Habilitado" de "Fuera de servicio" | Correcto: la vista indica cuántos laboratorios están fuera de servicio y marca el estado de cada uno |
+| 4 | Selección de laboratorio para reservar | Elegir un laboratorio desde /Laboratorio | Permite continuar hacia la consulta de disponibilidad / reserva | Correcto: desde la lista se puede continuar hacia /Reserva |
 
-Pruebas realizadas para HU-3 - Consultar disponibilidad:
+Pruebas realizadas para HU-3 - Consultar disponibilidad de un laboratorio:
+
+La consulta se expone en el endpoint `GET /Reserva/ConsultarDisponibilidad` (usado por la vista de calendario en `/Reserva`), validado en `ReservaService.ConsultarDisponibilidad`.
 
 | # | Prueba | Datos | Resultado esperado | Resultado obtenido |
 |---|--------|-------|---------------------|---------------------|
-| 5 | Horario libre | Laboratorio B, 04/10/2026, 8:00 a 9:00 a. m. | El calendario lo muestra disponible | Correcto: el horario aparece libre en el calendario |
-| 6 | Horario con conflicto | Laboratorio A, 04/10/2026, 2:00 a 3:00 p. m. | El calendario lo muestra ocupado | Correcto: aparece ocupado por la reserva de 1:30 a 3:30 p. m. |
-| 7 | Hora final antes que inicial | Inicio 2:00 p. m., fin 1:00 p. m. | Mensaje de error | No aplica en esta versión: la consulta se hace directamente en el calendario, sin campos para ingresar horas |
-| 8 | Fecha anterior a hoy | 30/09/2026 | Mensaje de error | No aplica en esta versión: la consulta se hace directamente en el calendario, sin campo para ingresar fecha |
-| 9 | Laboratorio fuera de servicio | Laboratorio "Fuera de servicio", horario válido | Nunca aparece disponible | Fuera del alcance de esta versión: el estado del laboratorio no se muestra en pantalla |
-| 10 | Reserva cancelada | Reserva con Estado "Cancelada" | No afecta la disponibilidad | Fuera del alcance de esta versión: los datos actuales solo incluyen reservas activas |
+| 5 | Horario libre | Laboratorio B, fecha válida, 8:00 a 9:00 a. m. | Disponible | Correcto: `Disponible = true` |
+| 6 | Horario con conflicto (traslape) | Laboratorio A, mismo día, horario que se cruza con una reserva activa | No disponible | Correcto: rechaza con motivo "El laboratorio ya tiene una reserva en ese horario." |
+| 7 | Hora final antes (o igual) que inicial | Hora inicio 2:00 p. m., hora fin 1:00 p. m. | Mensaje de error | Correcto: rechaza con motivo de horario inválido |
+| 8 | Fecha anterior a hoy | Una fecha pasada | Mensaje de error | Correcto: rechaza con "No se pueden consultar fechas pasadas." |
+| 9 | Laboratorio fuera de servicio | Laboratorio con Estado = "Fuera de servicio", horario válido | Nunca aparece disponible | Correcto: rechaza con "El laboratorio está fuera de servicio." antes de revisar el horario |
+| 10 | Reserva cancelada no afecta disponibilidad | Una reserva con Estado = "Cancelada" en ese mismo horario | El horario sigue disponible | Correcto: la consulta excluye explícitamente las reservas canceladas |
+| 11 | Horario fuera de los intervalos permitidos | Hora con minutos distintos de :00 o :30 | Mensaje de error | Correcto: rechaza con "Las horas deben estar en intervalos de 30 minutos." |
 
+**Nota sobre roles:** la vista de calendario (`/Reserva`) distingue entre Administrador y Usuario — el usuario regular solo ve laboratorio y horario de las reservas existentes (sin ubicación, responsable ni estado), mientras que el Administrador ve el detalle completo. Esto se probó con las cuentas `admin` y `usuario1`.
