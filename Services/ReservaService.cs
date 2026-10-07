@@ -10,6 +10,7 @@ namespace SistemaReservasLaboratorios.Services
     {
         private const string EstadoFueraDeServicio = "Fuera de servicio";
         private const string EstadoCancelada = "Cancelada";
+        private const double DuracionMaximaHoras = 4;
 
         private readonly AppDbContext _context;
 
@@ -45,6 +46,14 @@ namespace SistemaReservasLaboratorios.Services
                 return DisponibilidadResultado.NoDisponible("El horario ingresado no es válido.");
             }
 
+            // Nueva regla (HU-5): duración máxima de 4 horas
+            var duracion = horaFin.ToTimeSpan() - horaInicio.ToTimeSpan();
+            if (duracion.TotalHours > DuracionMaximaHoras)
+            {
+                return DisponibilidadResultado.NoDisponible(
+                    $"La reserva no puede superar las {DuracionMaximaHoras} horas de duración.");
+            }
+
             // 2. No se permiten consultas al pasado
             var hoy = DateOnly.FromDateTime(DateTime.Today);
             if (fecha < hoy)
@@ -61,7 +70,7 @@ namespace SistemaReservasLaboratorios.Services
             {
                 return DisponibilidadResultado.NoDisponible("El laboratorio no existe.");
             }
- 
+
             // 4. Un laboratorio fuera de servicio no se consulta contra sus reservas
             if (laboratorio.Estado == EstadoFueraDeServicio)
             {
@@ -84,6 +93,40 @@ namespace SistemaReservasLaboratorios.Services
             }
 
             // 6. Pasó todas las validaciones
+            return DisponibilidadResultado.Libre();
+        }
+
+        // Registra la reserva si pasa todas las validaciones de ConsultarDisponibilidad.
+        // Devuelve el resultado: si Disponible es true, la reserva ya quedó guardada.
+        public DisponibilidadResultado RegistrarReserva(
+            int laboratorioId, DateOnly fecha, TimeOnly horaInicio, TimeOnly horaFin, string responsable)
+        {
+            if (string.IsNullOrWhiteSpace(responsable))
+            {
+                return DisponibilidadResultado.NoDisponible("No se pudo identificar al responsable de la reserva.");
+            }
+
+            // Reutiliza TODAS las validaciones de horario, fecha, duración, conflicto y estado del laboratorio
+            var disponibilidad = ConsultarDisponibilidad(laboratorioId, fecha, horaInicio, horaFin);
+
+            if (!disponibilidad.Disponible)
+            {
+                return disponibilidad; // trae el motivo exacto del rechazo
+            }
+
+            var reserva = new Reserva
+            {
+                LaboratorioId = laboratorioId,
+                Fecha = fecha,
+                HoraInicio = horaInicio,
+                HoraFin = horaFin,
+                Responsable = responsable,
+                Estado = "Activa"
+            };
+
+            _context.Reservas.Add(reserva);
+            _context.SaveChanges();
+
             return DisponibilidadResultado.Libre();
         }
 
