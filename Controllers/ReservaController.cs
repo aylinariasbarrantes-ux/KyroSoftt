@@ -71,50 +71,114 @@ namespace SistemaReservasLaboratorios.Controllers
         public IActionResult ConsultarDisponibilidad(
             int laboratorioId, string fecha, string horaInicio, string horaFin)
         {
-            // Se exige que el laboratorio venga informado
-            if (laboratorioId <= 0)
-            {
-                return BadRequest(DisponibilidadResultado.NoDisponible("Debe indicar un laboratorio válido."));
-            }
+            // Parseo y validación de formato compartidos con RegistrarReserva
+            var error = ParsearHorario(laboratorioId, fecha, horaInicio, horaFin,
+                out var fechaParseada, out var inicioParseado, out var finParseado);
 
-            // Formato de fecha: yyyy-MM-dd
-            if (!DateOnly.TryParseExact(fecha, FormatoFecha, CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out var fechaParseada))
+            if (error != null)
             {
-                return BadRequest(DisponibilidadResultado.NoDisponible(
-                    $"La fecha no es válida. Usa el formato {FormatoFecha}."));
-            }
-
-            // Formato de hora: HH:mm
-            if (!TimeOnly.TryParseExact(horaInicio, FormatoHora, CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out var inicioParseado))
-            {
-                return BadRequest(DisponibilidadResultado.NoDisponible(
-                    $"La hora de inicio no es válida. Usa el formato {FormatoHora}."));
-            }
-
-            if (!TimeOnly.TryParseExact(horaFin, FormatoHora, CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out var finParseado))
-            {
-                return BadRequest(DisponibilidadResultado.NoDisponible($"La hora de fin no es válida. Usa el formato {FormatoHora}."));
-            }
-
-            if (!EsIntervaloDeTreintaMinutos(inicioParseado) || !EsIntervaloDeTreintaMinutos(finParseado))
-            {
-                return BadRequest(DisponibilidadResultado.NoDisponible(
-                    "Las horas deben seleccionarse en intervalos de 30 minutos (:00 o :30)."));
-            }
-
-            if (inicioParseado >= finParseado)
-            {
-                return BadRequest(DisponibilidadResultado.NoDisponible(
-                    $"La hora de fin no es válida. Usa el formato {FormatoHora}."));
+                return BadRequest(error);
             }
 
             var resultado = _reservaService.ConsultarDisponibilidad(
                 laboratorioId, fechaParseada, inicioParseado, finParseado);
 
             return Ok(resultado);
+        }
+
+        // Registra una reserva con los datos enviados por el formulario.
+        // El responsable NUNCA llega como parámetro: se toma de la sesión en el
+        // servidor, para que un usuario no pueda reservar a nombre de otra persona.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RegistrarReserva(
+            int laboratorioId, string fecha, string horaInicio, string horaFin)
+        {
+            // Mismo parseo/validación de formato que ConsultarDisponibilidad
+            var error = ParsearHorario(laboratorioId, fecha, horaInicio, horaFin,
+                out var fechaParseada, out var inicioParseado, out var finParseado);
+
+            if (error != null)
+            {
+                return BadRequest(error);
+            }
+
+            // El responsable se resuelve server-side desde la sesión.
+            var responsable = HttpContext.Session.GetString("NombreUsuario");
+            if (string.IsNullOrWhiteSpace(responsable))
+            {
+                // No debería ocurrir: [SesionRequerida] ya exige NombreUsuario.
+                // Aun así, se rechaza antes que guardar una reserva sin responsable.
+                return BadRequest(DisponibilidadResultado.NoDisponible(
+                    "No se pudo identificar al responsable de la reserva. Inicie sesión nuevamente."));
+            }
+
+            var resultado = _reservaService.RegistrarReserva(
+                laboratorioId, fechaParseada, inicioParseado, finParseado, responsable);
+
+            // Si Disponible es false se devuelve el motivo exacto que ya trae el servicio.
+            if (!resultado.Disponible)
+            {
+                return BadRequest(resultado);
+            }
+
+            // Disponible == true: la reserva ya quedó guardada dentro del servicio.
+            return Ok(resultado);
+        }
+
+        // Convierte los textos del formulario/query a tipos fuertes con el formato esperado.
+        // Devuelve null si todo es válido, o el DisponibilidadResultado con el motivo del rechazo.
+        // Lo usan tanto ConsultarDisponibilidad como RegistrarReserva para no duplicar validaciones.
+        private static DisponibilidadResultado? ParsearHorario(
+            int laboratorioId, string? fecha, string? horaInicio, string? horaFin,
+            out DateOnly fechaParseada, out TimeOnly inicioParseado, out TimeOnly finParseado)
+        {
+            fechaParseada = default;
+            inicioParseado = default;
+            finParseado = default;
+
+            // Se exige que el laboratorio venga informado
+            if (laboratorioId <= 0)
+            {
+                return DisponibilidadResultado.NoDisponible("Debe indicar un laboratorio válido.");
+            }
+
+            // Formato de fecha: yyyy-MM-dd
+            if (!DateOnly.TryParseExact(fecha, FormatoFecha, CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out fechaParseada))
+            {
+                return DisponibilidadResultado.NoDisponible(
+                    $"La fecha no es válida. Usa el formato {FormatoFecha}.");
+            }
+
+            // Formato de hora: HH:mm
+            if (!TimeOnly.TryParseExact(horaInicio, FormatoHora, CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out inicioParseado))
+            {
+                return DisponibilidadResultado.NoDisponible(
+                    $"La hora de inicio no es válida. Usa el formato {FormatoHora}.");
+            }
+
+            if (!TimeOnly.TryParseExact(horaFin, FormatoHora, CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out finParseado))
+            {
+                return DisponibilidadResultado.NoDisponible(
+                    $"La hora de fin no es válida. Usa el formato {FormatoHora}.");
+            }
+
+            if (!EsIntervaloDeTreintaMinutos(inicioParseado) || !EsIntervaloDeTreintaMinutos(finParseado))
+            {
+                return DisponibilidadResultado.NoDisponible(
+                    "Las horas deben seleccionarse en intervalos de 30 minutos (:00 o :30).");
+            }
+
+            if (inicioParseado >= finParseado)
+            {
+                return DisponibilidadResultado.NoDisponible(
+                    $"La hora de fin no es válida. Usa el formato {FormatoHora}.");
+            }
+
+            return null;
         }
 
         private static bool EsIntervaloDeTreintaMinutos(TimeOnly hora)
