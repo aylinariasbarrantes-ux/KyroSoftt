@@ -175,7 +175,7 @@ namespace SistemaReservasLaboratorios.Controllers
             if (inicioParseado >= finParseado)
             {
                 return DisponibilidadResultado.NoDisponible(
-                    $"La hora de fin no es válida. Usa el formato {FormatoHora}.");
+                    "La hora final debe ser posterior a la hora inicial.");
             }
 
             return null;

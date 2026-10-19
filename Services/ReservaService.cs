@@ -11,6 +11,8 @@ namespace SistemaReservasLaboratorios.Services
         private const string EstadoFueraDeServicio = "Fuera de servicio";
         private const string EstadoCancelada = "Cancelada";
         private const double DuracionMaximaHoras = 4;
+        private static readonly TimeOnly HoraApertura = new(8, 0);
+        private static readonly TimeOnly HoraCierre = new(22, 0);
 
         private readonly AppDbContext _context;
 
@@ -43,7 +45,12 @@ namespace SistemaReservasLaboratorios.Services
 
             if (horaInicio >= horaFin)
             {
-                return DisponibilidadResultado.NoDisponible("El horario ingresado no es válido.");
+                return DisponibilidadResultado.NoDisponible("La hora final debe ser posterior a la hora inicial.");
+            }
+
+            if (horaInicio < HoraApertura || horaFin > HoraCierre)
+            {
+                return DisponibilidadResultado.NoDisponible("El horario permitido es de 8:00 a. m. a 10:00 p. m.");
             }
 
             // Nueva regla (HU-5): duración máxima de 4 horas
@@ -58,7 +65,7 @@ namespace SistemaReservasLaboratorios.Services
             var hoy = DateOnly.FromDateTime(DateTime.Today);
             if (fecha < hoy)
             {
-                return DisponibilidadResultado.NoDisponible("No se pueden consultar fechas pasadas.");
+                return DisponibilidadResultado.NoDisponible("La fecha seleccionada no puede estar en el pasado.");
             }
 
             // 3. El laboratorio debe existir
