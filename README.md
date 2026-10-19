@@ -98,3 +98,33 @@ La consulta se expone en el endpoint `GET /Reserva/ConsultarDisponibilidad` (usa
 | 11 | Horario fuera de los intervalos permitidos | Hora con minutos distintos de :00 o :30 | Mensaje de error | Correcto: rechaza con "Las horas deben estar en intervalos de 30 minutos." |
 
 **Nota sobre roles:** la vista de calendario (`/Reserva`) distingue entre Administrador y Usuario — el usuario regular solo ve laboratorio y horario de las reservas existentes (sin ubicación, responsable ni estado), mientras que el Administrador ve el detalle completo. Esto se probó con las cuentas `admin` y `usuario1`.
+
+Pruebas realizadas para HU-4 - Registrar reserva:
+
+La reserva se registra con `POST /Reserva` (acción del controlador) y se procesa en `ReservaService.RegistrarReserva`. El responsable se toma de la sesión (`NombreUsuario`), nunca del formulario.
+
+| # | Prueba | Datos | Resultado esperado | Resultado obtenido |
+|---|--------|-------|---------------------|---------------------|
+| 1 | Reserva válida | Laboratorio disponible, fecha futura, 8:00 a 10:00 a. m. | La reserva se guarda y se muestra confirmación | Correcto: la reserva se guardó y se mostró el mensaje de confirmación |
+| 2 | Responsable tomado de la sesión | Usuario autenticado registrando una reserva | El responsable es el usuario en sesión y no se puede editar | Correcto: el responsable aparece fijo en el formulario y se guarda con el usuario de la sesión |
+| 3 | Campos vacíos | Fecha u hora sin completar | El formulario no se envía | Correcto: el navegador bloqueó el envío y marcó el campo vacío |
+
+Pruebas realizadas para HU-5 - Validar horario de la reserva:
+
+| # | Prueba | Datos | Resultado esperado | Resultado obtenido |
+|---|--------|-------|---------------------|---------------------|
+| 1 | Hora fuera del horario permitido | Hora de inicio o fin fuera del horario del laboratorio | Mensaje de error | Correcto: rechaza con mensaje de horario inválido |
+| 2 | Fecha anterior a hoy | Una fecha pasada | Mensaje de error | Correcto: rechaza con mensaje de fecha pasada |
+| 3 | Horario fuera de los intervalos permitidos | 8:10 a 9:00 a. m. | Mensaje de error | Correcto: rechaza con "Las horas deben estar en intervalos de 30 minutos." |
+| 4 | Duración mayor a 4 horas | 8:00 a. m. a 12:30 p. m. | Mensaje de error | Correcto: rechaza con mensaje de duración máxima de 4 horas |
+| 5 | Duración exacta de 4 horas | 8:00 a. m. a 12:00 p. m. | La reserva se guarda | Correcto: la reserva se guardó |
+| 6 | Hora final antes (o igual) que inicial | Hora inicio 10:00 a. m., hora fin 9:00 a. m. | Mensaje de error | Correcto: rechaza con mensaje de horario inválido |
+
+Pruebas realizadas para HU-6 - Evitar conflictos de reserva:
+
+| # | Prueba | Datos | Resultado esperado | Resultado obtenido |
+|---|--------|-------|---------------------|---------------------|
+| 1 | Conflicto en el mismo laboratorio | Mismo laboratorio y fecha, horario que se traslapa con una reserva activa | La reserva se rechaza | Correcto: rechaza con "El laboratorio ya tiene una reserva en ese horario." |
+| 2 | Laboratorios distintos, mismo horario | Laboratorio A y Laboratorio B, misma fecha y hora | Ambas reservas se guardan | Correcto: las dos reservas se guardaron |
+| 3 | Reserva cancelada no bloquea | Horario de una reserva con Estado = "Cancelada" | La reserva se guarda | Correcto: la reserva se guardó, las canceladas no cuentan como conflicto |
+| 4 | Laboratorio fuera de servicio | Laboratorio con Estado = "Fuera de servicio" | La reserva se rechaza | Correcto: rechaza con "El laboratorio está fuera de servicio." |
