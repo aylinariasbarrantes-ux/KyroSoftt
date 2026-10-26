@@ -1,0 +1,56 @@
+# Ejecuta CI con cada push a cualquiera de las ramas principales.
+trigger:
+  branches:
+    include:
+      - main
+      - master
+
+# Las pruebas usan SQLite temporal; no necesitan el SQL Server local.
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+# Descarga el repositorio.
+- checkout: self
+
+# Instala el SDK correspondiente a net8.0.
+- task: UseDotNet@2
+  displayName: 'Instalar .NET 8'
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.x'
+
+# Restaura NuGet para la aplicación y sus pruebas.
+- script: dotnet restore SistemaReservasLaboratorios.sln
+  displayName: 'Restaurar dependencias'
+
+# Compila toda la solución en Release.
+- script: dotnet build SistemaReservasLaboratorios.sln --configuration $(buildConfiguration) --no-restore
+  displayName: 'Compilar en Release'
+
+# Ejecuta todas las pruebas del proyecto, incluidas las de integración.
+- script: dotnet test SistemaReservasLaboratorios.Tests/SistemaReservasLaboratorios.Tests.csproj --configuration $(buildConfiguration) --no-build --logger "trx;LogFileName=resultados.trx" --results-directory "$(Agent.TempDirectory)/TestResults"
+  displayName: 'Ejecutar pruebas unitarias e integración'
+
+# Publica el TRX en Tests incluso si alguna prueba falla.
+- task: PublishTestResults@2
+  displayName: 'Publicar reporte de pruebas'
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFormat: 'VSTest'
+    testResultsFiles: '**/*.trx'
+    searchFolder: '$(Agent.TempDirectory)/TestResults'
+    failTaskOnFailedTests: true
+    failTaskOnMissingResultsFile: true
+    testRunTitle: 'KyroSoft - $(Build.BuildNumber)'
+
+# Conserva también el archivo TRX como descarga de la ejecución.
+- task: PublishPipelineArtifact@1
+  displayName: 'Guardar archivos TRX'
+  condition: and(succeededOrFailed(), eq(variables['Agent.JobStatus'], 'Succeeded'))
+  inputs:
+    targetPath: '$(Agent.TempDirectory)/TestResults'
+    artifact: 'reportes-pruebas'
