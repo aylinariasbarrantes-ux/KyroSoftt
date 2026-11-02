@@ -137,6 +137,74 @@ namespace SistemaReservasLaboratorios.Services
             return DisponibilidadResultado.Libre();
         }
 
+        // HU-7: reservas del usuario indicado, de la más reciente a la más antigua.
+        public List<Reserva> ObtenerMisReservas(string responsable)
+        {
+            return _context.Reservas
+                .AsNoTracking()
+                .Include(r => r.Laboratorio)
+                .Where(r => r.Responsable == responsable)
+                .OrderByDescending(r => r.Fecha)
+                .ThenBy(r => r.HoraInicio)
+                .ToList();
+        }
+
+        // HU-8: cancela (cambia el estado, no borra el registro).
+        // El dueño puede cancelar la suya; el administrador cualquiera.
+        public OperacionResultado CancelarReserva(int reservaId, string usuario, bool esAdministrador)
+        {
+            var reserva = _context.Reservas.FirstOrDefault(r => r.Id == reservaId);
+
+            if (reserva == null)
+            {
+                return OperacionResultado.Error("La reserva no existe.");
+            }
+
+            if (reserva.Estado == EstadoCancelada)
+            {
+                return OperacionResultado.Error("La reserva ya estaba cancelada.");
+            }
+
+            var esDueno = string.Equals(reserva.Responsable, usuario, StringComparison.OrdinalIgnoreCase);
+            if (!esAdministrador && !esDueno)
+            {
+                return OperacionResultado.Error("No puede cancelar una reserva de otro usuario.");
+            }
+
+            reserva.Estado = EstadoCancelada;
+            _context.SaveChanges();
+
+            return OperacionResultado.Ok("La reserva fue cancelada correctamente.");
+        }
+
+        // Reservas activas que aún no terminaron (para el panel principal del administrador).
+        private IQueryable<Reserva> ConsultaReservasProximas()
+        {
+            var ahora = DateTime.Now;
+            var hoy = DateOnly.FromDateTime(ahora);
+            var horaActual = TimeOnly.FromDateTime(ahora);
+
+            return _context.Reservas
+                .AsNoTracking()
+                .Where(r => r.Estado != EstadoCancelada
+                            && (r.Fecha > hoy || (r.Fecha == hoy && r.HoraFin > horaActual)));
+        }
+
+        public List<Reserva> ObtenerProximasReservas(int cantidad)
+        {
+            return ConsultaReservasProximas()
+                .Include(r => r.Laboratorio)
+                .OrderBy(r => r.Fecha)
+                .ThenBy(r => r.HoraInicio)
+                .Take(cantidad)
+                .ToList();
+        }
+
+        public int ContarReservasProximas()
+        {
+            return ConsultaReservasProximas().Count();
+        }
+
         private static bool EsIntervaloDeTreintaMinutos(TimeOnly hora)
         {
             return hora.Minute == 0 || hora.Minute == 30;
