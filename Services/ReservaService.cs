@@ -25,6 +25,8 @@ namespace SistemaReservasLaboratorios.Services
         {
             return _context.Reservas
                 .AsNoTracking()
+                // Las canceladas ya no ocupan el horario ni deben aparecer en el calendario.
+                .Where(r => r.Estado != EstadoCancelada)
                 .Include(r => r.Laboratorio)
                 .OrderBy(r => r.Fecha)
                 .ThenBy(r => r.HoraInicio)

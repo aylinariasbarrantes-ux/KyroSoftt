@@ -15,6 +15,12 @@
 <div class="mx-auto max-w-7xl space-y-8">
     @if (rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase))
     {
+        var totalLaboratorios = (int)(ViewBag.TotalLaboratorios ?? 0);
+        var laboratoriosHabilitados = (int)(ViewBag.LaboratoriosHabilitados ?? 0);
+        var laboratoriosFueraDeServicio = (int)(ViewBag.LaboratoriosFueraDeServicio ?? 0);
+        var reservasProximas = (int)(ViewBag.ReservasProximas ?? 0);
+        var proximasReservas = ViewBag.ProximasReservas as List<Reserva> ?? new List<Reserva>();
+
         <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <p class="text-sm font-medium text-brand-600 dark:text-brand-300">Panel principal</p>
@@ -45,8 +51,8 @@
                         </svg>
                     </div>
                 </div>
-                <p class="mt-4 text-3xl font-semibold tracking-tight">0</p>
-                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Consulta el calendario y los horarios programados</p>
+                <p class="mt-4 text-3xl font-semibold tracking-tight">@reservasProximas</p>
+                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Reservas próximas programadas</p>
             </a>
             <a href="~/laboratorio" class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
                 <div class="flex items-center justify-between">
@@ -59,8 +65,12 @@
                         </svg>
                     </div>
                 </div>
-                <p class="mt-4 text-3xl font-semibold tracking-tight">0</p>
-                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Pendientes de registrar</p>
+                <p class="mt-4 text-3xl font-semibold tracking-tight">@totalLaboratorios</p>
+                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                    @(laboratoriosFueraDeServicio == 0
+                        ? "Todos operativos"
+                        : $"{laboratoriosFueraDeServicio} fuera de servicio")
+                </p>
             </a>
             <article class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
                 <div class="flex items-center justify-between">
@@ -71,8 +81,8 @@
                         </svg>
                     </div>
                 </div>
-                <p class="mt-4 text-3xl font-semibold tracking-tight">0</p>
-                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">La disponibilidad aparecerá aquí</p>
+                <p class="mt-4 text-3xl font-semibold tracking-tight">@laboratoriosHabilitados</p>
+                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Laboratorios habilitados</p>
             </article>
             <article class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
                 <div class="flex items-center justify-between">
@@ -100,22 +110,68 @@
                         Ver todas
                     </a>
                 </div>
-                <div class="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5">
-                            <path d="M8 2v4" />
-                            <path d="M16 2v4" />
-                            <rect width="18" height="18" x="3" y="4" rx="2" />
-                            <path d="M3 10h18" />
-                            <path d="m9 16 2 2 4-4" />
-                        </svg>
+                @if (proximasReservas.Count == 0)
+                {
+                    <div class="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5">
+                                <path d="M8 2v4" />
+                                <path d="M16 2v4" />
+                                <rect width="18" height="18" x="3" y="4" rx="2" />
+                                <path d="M3 10h18" />
+                                <path d="m9 16 2 2 4-4" />
+                            </svg>
+                        </div>
+                        <h3 class="mt-4 text-sm font-medium">No hay reservas próximas</h3>
+                        <p class="mt-1 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
+                            Cuando se creen reservas, podrás ver aquí el laboratorio,
+                            la fecha, la hora y el estado.
+                        </p> 
                     </div>
-                    <h3 class="mt-4 text-sm font-medium">No hay reservas próximas</h3>
-                    <p class="mt-1 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
-                        Cuando se creen reservas, podrás ver aquí el laboratorio,
-                        la fecha, la hora y el estado.
-                    </p> 
-                </div>
+                }
+                else
+                {
+                    <ul class="divide-y divide-zinc-200 dark:divide-zinc-800">
+                        @foreach (var reserva in proximasReservas)
+                        {
+                            var estado = reserva.Estado ?? string.Empty;
+                            var estaCancelada = string.Equals(estado, "Cancelada", StringComparison.OrdinalIgnoreCase);
+
+                            <li class="flex flex-col gap-3 px-5 py-4 transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="flex min-w-0 items-center gap-3">
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
+                                            <path d="M8 2v4" />
+                                            <path d="M16 2v4" />
+                                            <rect width="18" height="18" x="3" y="4" rx="2" />
+                                            <path d="M3 10h18" />
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-medium text-zinc-950 dark:text-zinc-100">@(reserva.Laboratorio?.Nombre ?? $"Laboratorio {reserva.LaboratorioId}")</p>
+                                        <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                                            @reserva.Fecha.ToString("dd'/'MM'/'yyyy") · @reserva.HoraInicio.ToString("HH:mm") - @reserva.HoraFin.ToString("HH:mm") · @reserva.Responsable
+                                        </p>
+                                    </div>
+                                </div>
+                                @if (estaCancelada)
+                                {
+                                    <span class="inline-flex w-fit items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 dark:border-red-900/70 dark:bg-red-950/50 dark:text-red-300">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                                        @estado
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950 dark:text-emerald-300">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                        @estado
+                                    </span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
             </div>
         </section>
     }
