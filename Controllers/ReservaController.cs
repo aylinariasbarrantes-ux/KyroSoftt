@@ -30,8 +30,7 @@ namespace SistemaReservasLaboratorios.Controllers
         public IActionResult Index()
         {
             var hoy = DateOnly.FromDateTime(DateTime.Today);
-            var rol = HttpContext.Session.GetString("Rol");
-            var esAdministrador = string.Equals(rol, "Administrador", StringComparison.OrdinalIgnoreCase);
+            var esAdministrador = EsAdministrador();
 
             var model = new ReservaCalendarioViewModel
             {
@@ -124,6 +123,73 @@ namespace SistemaReservasLaboratorios.Controllers
 
             // Disponible == true: la reserva ya quedó guardada dentro del servicio.
             return Ok(resultado);
+        }
+
+        // HU-7: reservas del usuario autenticado. El usuario se toma de la sesión,
+        // nunca de un parámetro, por lo que el administrador también ve solo las suyas.
+        [HttpGet]
+        public IActionResult MisReservas()
+        {
+            var usuario = HttpContext.Session.GetString("NombreUsuario");
+            if (string.IsNullOrWhiteSpace(usuario))
+            {
+                // No debería ocurrir: [SesionRequerida] ya exige NombreUsuario.
+                return BadRequest(OperacionResultado.Error(
+                    "No se pudo identificar al usuario en sesión. Inicie sesión nuevamente."));
+            }
+
+            var reservas = _reservaService.ObtenerMisReservas(usuario)
+                .Select(r => new MiReservaItemViewModel
+                {
+                    Id = r.Id,
+                    LaboratorioId = r.LaboratorioId,
+                    Laboratorio = r.Laboratorio?.Nombre ?? $"Laboratorio {r.LaboratorioId}",
+                    Fecha = r.Fecha.ToString(FormatoFecha),
+                    HoraInicio = r.HoraInicio.ToString(FormatoHora),
+                    HoraFin = r.HoraFin.ToString(FormatoHora),
+                    Estado = r.Estado,
+                    PuedeCancelar = string.Equals(r.Estado, "Activa", StringComparison.OrdinalIgnoreCase)
+                })
+                .ToList();
+
+            return Ok(reservas);
+        }
+
+        // HU-8: cancela la reserva indicada. Usuario y rol se resuelven solo desde
+        // la sesión, para que nadie pueda cancelar a nombre de otro desde el formulario.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CancelarReserva(int reservaId)
+        {
+            if (reservaId <= 0)
+            {
+                return BadRequest(OperacionResultado.Error("Debe indicar una reserva válida."));
+            }
+
+            var usuario = HttpContext.Session.GetString("NombreUsuario");
+            if (string.IsNullOrWhiteSpace(usuario))
+            {
+                // No debería ocurrir: [SesionRequerida] ya exige NombreUsuario.
+                return BadRequest(OperacionResultado.Error(
+                    "No se pudo identificar al usuario en sesión. Inicie sesión nuevamente."));
+            }
+
+            var resultado = _reservaService.CancelarReserva(reservaId, usuario, EsAdministrador());
+
+            // Se devuelve el mensaje exacto del servicio, sin inventar textos nuevos.
+            if (!resultado.Exito)
+            {
+                return BadRequest(resultado);
+            }
+
+            return Ok(resultado);
+        }
+
+        // Comparación de rol centralizada, usada por Index, MisReservas y CancelarReserva.
+        private bool EsAdministrador()
+        {
+            var rol = HttpContext.Session.GetString("Rol");
+            return string.Equals(rol, "Administrador", StringComparison.OrdinalIgnoreCase);
         }
 
         // Convierte los textos del formulario/query a tipos fuertes con el formato esperado.
