@@ -201,6 +201,14 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg>
                             Ver calendario
                         </a>
+                        <a asp-controller="Reserva" asp-action="MisReservas" class="group inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-semibold text-zinc-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-md active:translate-y-0 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-800">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /><path d="M8 14h.01" /><path d="M12 14h.01" /></svg>
+                            Mis reservas
+                        </a>
+                        <a asp-controller="Laboratorio" asp-action="Index" class="group inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-semibold text-zinc-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-md active:translate-y-0 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-800">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true"><path d="M9 2h6" /><path d="M10 9h4" /><path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" /></svg>
+                            Laboratorios
+                        </a>
                     </div>
                 </div>
             </div>
@@ -291,7 +299,7 @@
                             <select id="horaFin" name="horaFin" required class="h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"><option value="">Seleccione una hora</option></select>
                         </div>
                     </div>
-                    <p class="-mt-2 text-xs text-zinc-500 dark:text-zinc-400">Horario permitido: 8:00 a. m. a 10:00 p. m., en intervalos de 30 minutos y con una duración máxima de 4 horas.</p>
+                    <p class="-mt-2 text-xs text-zinc-500 dark:text-zinc-400">Horario permitido: 8:00 a. m. a 10:00 p. m., en intervalos de 30 minutos. Máximo 4 horas (8 bloques de 30 minutos).</p>
                     <div id="availabilityResult" class="hidden rounded-xl border p-4" role="status" aria-live="polite">
                         <div class="flex items-start gap-3">
                             <div id="availabilityResultIcon" class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"></div>
@@ -372,6 +380,23 @@
                 }
             }
 
+            function actualizarHorasFinDisponibles() {
+                const inicio = toMinutes(inicioInput.value);
+
+                [...finInput.options].forEach(option => {
+                    if (!option.value) {
+                        option.disabled = false;
+                        return;
+                    }
+
+                    const fin = toMinutes(option.value);
+                    option.disabled = Number.isFinite(inicio) && (fin <= inicio || fin - inicio > 240);
+                });
+
+                const opcionSeleccionada = finInput.selectedOptions[0];
+                if (opcionSeleccionada?.disabled) finInput.value = "";
+            }
+
             function clearResult() {
                 result.className = "hidden rounded-xl border p-4";
                 resultIcon.className = "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full";
@@ -391,6 +416,7 @@
 
             function openModal() {
                 clearResult();
+                actualizarHorasFinDisponibles();
                 if (!fechaInput.value) fechaInput.value = todayIso;
                 modal.classList.remove("hidden");
                 modal.classList.add("flex");
@@ -507,7 +533,9 @@
             }
 
             cargarHorasDisponibles();
+            actualizarHorasFinDisponibles();
 
+            inicioInput.addEventListener("change", actualizarHorasFinDisponibles);
             [laboratorioInput, fechaInput, inicioInput, finInput].forEach(input => input.addEventListener("change", clearResult));
 
             form.addEventListener("submit", async event => {
@@ -578,6 +606,7 @@
                     showSuccessToast();
                     form.reset();
                     fechaInput.value = todayIso;
+                    actualizarHorasFinDisponibles();
                     clearResult();
                 } catch (error) {
                     console.error(error);
@@ -588,7 +617,12 @@
                 }
             });
 
-            if (new URLSearchParams(window.location.search).get("crearReserva") === "1") {
+            const queryParams = new URLSearchParams(window.location.search);
+            if (queryParams.get("crearReserva") === "1") {
+                const laboratorioId = queryParams.get("laboratorioId");
+                if (laboratorioId && [...laboratorioInput.options].some(option => option.value === laboratorioId)) {
+                    laboratorioInput.value = laboratorioId;
+                }
                 openModal();
                 window.history.replaceState({}, "", window.location.pathname + window.location.hash);
             }

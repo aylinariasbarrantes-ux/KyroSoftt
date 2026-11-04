@@ -9,7 +9,7 @@ namespace SistemaReservasLaboratorios.Models
         public string Fecha { get; set; } = string.Empty; // yyyy-MM-dd
         public string HoraInicio { get; set; } = string.Empty; // HH:mm
         public string HoraFin { get; set; } = string.Empty; // HH:mm
-        public string Estado { get; set; } = string.Empty; // "Activa" o "Cancelada"
+        public string Estado { get; set; } = string.Empty; // "Activa", "Cancelada" o "Expirada"
         public bool PuedeCancelar { get; set; }
     }
 }

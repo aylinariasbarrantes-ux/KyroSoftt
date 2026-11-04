@@ -138,21 +138,31 @@ namespace SistemaReservasLaboratorios.Controllers
                     "No se pudo identificar al usuario en sesión. Inicie sesión nuevamente."));
             }
 
+            var ahora = DateTime.Now;
+            var hoy = DateOnly.FromDateTime(ahora);
+            var horaActual = TimeOnly.FromDateTime(ahora);
+
             var reservas = _reservaService.ObtenerMisReservas(usuario)
-                .Select(r => new MiReservaItemViewModel
+                .Select(r =>
                 {
-                    Id = r.Id,
-                    LaboratorioId = r.LaboratorioId,
-                    Laboratorio = r.Laboratorio?.Nombre ?? $"Laboratorio {r.LaboratorioId}",
-                    Fecha = r.Fecha.ToString(FormatoFecha),
-                    HoraInicio = r.HoraInicio.ToString(FormatoHora),
-                    HoraFin = r.HoraFin.ToString(FormatoHora),
-                    Estado = r.Estado,
-                    PuedeCancelar = string.Equals(r.Estado, "Activa", StringComparison.OrdinalIgnoreCase)
+                    var estaActiva = string.Equals(r.Estado, "Activa", StringComparison.OrdinalIgnoreCase);
+                    var estaExpirada = estaActiva && (r.Fecha < hoy || (r.Fecha == hoy && r.HoraFin <= horaActual));
+
+                    return new MiReservaItemViewModel
+                    {
+                        Id = r.Id,
+                        LaboratorioId = r.LaboratorioId,
+                        Laboratorio = r.Laboratorio?.Nombre ?? $"Laboratorio {r.LaboratorioId}",
+                        Fecha = r.Fecha.ToString(FormatoFecha),
+                        HoraInicio = r.HoraInicio.ToString(FormatoHora),
+                        HoraFin = r.HoraFin.ToString(FormatoHora),
+                        Estado = estaExpirada ? "Expirada" : r.Estado,
+                        PuedeCancelar = estaActiva && !estaExpirada
+                    };
                 })
                 .ToList();
 
-            return Ok(reservas);
+            return View(reservas);
         }
 
         // HU-8: cancela la reserva indicada. Usuario y rol se resuelven solo desde

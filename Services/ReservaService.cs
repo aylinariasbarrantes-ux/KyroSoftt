@@ -10,7 +10,7 @@ namespace SistemaReservasLaboratorios.Services
     {
         private const string EstadoFueraDeServicio = "Fuera de servicio";
         private const string EstadoCancelada = "Cancelada";
-        private const double DuracionMaximaHoras = 4;
+        private const int DuracionMaximaMinutos = 240;
         private static readonly TimeOnly HoraApertura = new(8, 0);
         private static readonly TimeOnly HoraCierre = new(22, 0);
 
@@ -57,10 +57,10 @@ namespace SistemaReservasLaboratorios.Services
 
             // Nueva regla (HU-5): duración máxima de 4 horas
             var duracion = horaFin.ToTimeSpan() - horaInicio.ToTimeSpan();
-            if (duracion.TotalHours > DuracionMaximaHoras)
+            if (duracion.TotalMinutes > DuracionMaximaMinutos)
             {
                 return DisponibilidadResultado.NoDisponible(
-                    $"La reserva no puede superar las {DuracionMaximaHoras} horas de duración.");
+                    "La reserva no puede superar las 4 horas (8 intervalos de 30 minutos).");
             }
 
             // 2. No se permiten consultas al pasado
@@ -171,6 +171,15 @@ namespace SistemaReservasLaboratorios.Services
             if (!esAdministrador && !esDueno)
             {
                 return OperacionResultado.Error("No puede cancelar una reserva de otro usuario.");
+            }
+
+            var ahora = DateTime.Now;
+            var hoy = DateOnly.FromDateTime(ahora);
+            var horaActual = TimeOnly.FromDateTime(ahora);
+            var yaExpirada = reserva.Fecha < hoy || (reserva.Fecha == hoy && reserva.HoraFin <= horaActual);
+            if (yaExpirada)
+            {
+                return OperacionResultado.Error("No se puede cancelar una reserva que ya expiró.");
             }
 
             reserva.Estado = EstadoCancelada;

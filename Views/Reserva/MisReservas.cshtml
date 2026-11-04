@@ -1,0 +1,281 @@
+@model List<SistemaReservasLaboratorios.Models.MiReservaItemViewModel>
+@{
+    ViewData["Title"] = "Mis reservas";
+    var rol = Context.Session.GetString("Rol") ?? "Usuario";
+    var esAdministrador = rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+    Layout = esAdministrador ? "~/Views/Shared/_Layout.cshtml" : "~/Views/Shared/_LayoutUsuario.cshtml";
+    var activas = Model.Count(r => string.Equals(r.Estado, "Activa", StringComparison.OrdinalIgnoreCase));
+    var canceladas = Model.Count(r => string.Equals(r.Estado, "Cancelada", StringComparison.OrdinalIgnoreCase));
+    var expiradas = Model.Count(r => string.Equals(r.Estado, "Expirada", StringComparison.OrdinalIgnoreCase));
+
+    string FormatearHora12(string hora)
+    {
+        if (!TimeOnly.TryParse(hora, out var valor)) return hora;
+        var hora12 = valor.Hour % 12 == 0 ? 12 : valor.Hour % 12;
+        var periodo = valor.Hour >= 12 ? "p. m." : "a. m.";
+        return $"{hora12}:{valor.Minute:00} {periodo}";
+    }
+}
+
+<div class="mx-auto max-w-7xl space-y-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <a asp-controller="Home" asp-action="Index" class="group inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md bg-brand-600 px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-md active:translate-y-0 active:scale-[0.98] dark:bg-brand-500 dark:hover:bg-brand-400">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+            Volver al inicio
+        </a>
+
+        @if (!esAdministrador)
+        {
+            <a asp-controller="Home" asp-action="Index" asp-route-crearReserva="1" class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-brand-200 bg-brand-50 px-4 text-sm font-semibold text-brand-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-100 hover:shadow-md dark:border-brand-900 dark:bg-brand-950 dark:text-brand-200 dark:hover:bg-brand-900">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                Crear reserva
+            </a>
+        }
+    </div>
+
+    <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <p class="text-sm font-medium text-brand-600 dark:text-brand-300">HU-7 · Historial personal</p>
+            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-100 sm:text-3xl">Mis reservas</h1>
+            <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Consulta tus reservas activas, canceladas y expiradas. Las reservas que ya terminaron no se pueden cancelar.</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/50 dark:text-emerald-300">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                <span id="activeReservationsCount">@activas</span> activas
+            </span>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                <span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>
+                <span id="cancelledReservationsCount">@canceladas</span> canceladas
+            </span>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-300">
+                <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                <span id="expiredReservationsCount">@expiradas</span> expiradas
+            </span>
+        </div>
+    </section>
+
+    <section class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="border-b border-zinc-200 px-5 py-4 dark:border-zinc-800 sm:px-6">
+            <h2 class="text-sm font-semibold text-zinc-950 dark:text-zinc-100">Listado de reservas</h2>
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">@Model.Count reserva(s) asociada(s) al usuario autenticado.</p>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
+                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-300">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg>
+                </div>
+                <h3 class="mt-4 text-sm font-semibold text-zinc-950 dark:text-zinc-100">Todavía no tienes reservas</h3>
+                <p class="mt-1 max-w-md text-sm text-zinc-500 dark:text-zinc-400">Cuando registres una reserva aparecerá aquí con su laboratorio, fecha, horario y estado.</p>
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[820px] text-sm">
+                    <thead>
+                        <tr class="border-b border-zinc-200 bg-zinc-50 text-xs uppercase tracking-tight text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
+                            <th scope="col" class="px-5 py-3 text-start font-medium">Laboratorio</th>
+                            <th scope="col" class="px-5 py-3 text-start font-medium">Fecha</th>
+                            <th scope="col" class="px-5 py-3 text-start font-medium">Hora inicial</th>
+                            <th scope="col" class="px-5 py-3 text-start font-medium">Hora final</th>
+                            <th scope="col" class="px-5 py-3 text-start font-medium">Estado</th>
+                            <th scope="col" class="px-5 py-3 text-end font-medium">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservationsTableBody" class="divide-y divide-zinc-200 dark:divide-zinc-800">
+                        @foreach (var reserva in Model)
+                        {
+                            var estaActiva = string.Equals(reserva.Estado, "Activa", StringComparison.OrdinalIgnoreCase);
+                            var estaExpirada = string.Equals(reserva.Estado, "Expirada", StringComparison.OrdinalIgnoreCase);
+                            <tr data-reservation-row="@reserva.Id" class="transition-colors hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40">
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true"><path d="M9 2h6" /><path d="M10 9h4" /><path d="M10 2v5.4a2 2 0 0 1-.4 1.2L4.8 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.2-6l-4.8-6.4a2 2 0 0 1-.4-1.2V2" /></svg>
+                                        </div>
+                                        <span class="font-medium text-zinc-950 dark:text-zinc-100">@reserva.Laboratorio</span>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4 text-zinc-600 dark:text-zinc-400">@reserva.Fecha</td>
+                                <td class="px-5 py-4 text-zinc-600 dark:text-zinc-400">@FormatearHora12(reserva.HoraInicio)</td>
+                                <td class="px-5 py-4 text-zinc-600 dark:text-zinc-400">@FormatearHora12(reserva.HoraFin)</td>
+                                <td class="px-5 py-4">
+                                    <span data-reservation-status="@reserva.Id" class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold @(estaActiva ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/50 dark:text-emerald-300" : estaExpirada ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-300" : "border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300")">
+                                        <span class="h-1.5 w-1.5 rounded-full @(estaActiva ? "bg-emerald-500" : estaExpirada ? "bg-amber-500" : "bg-zinc-400")"></span>
+                                        <span data-reservation-status-text>@reserva.Estado</span>
+                                    </span>
+                                </td>
+                                <td class="px-5 py-4 text-end">
+                                    @if (reserva.PuedeCancelar)
+                                    {
+                                        <button type="button" data-cancel-reservation="@reserva.Id" class="inline-flex h-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-100 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/70 dark:bg-red-950/50 dark:text-red-300 dark:hover:bg-red-950">
+                                            Cancelar
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-zinc-400 dark:text-zinc-500">Sin acciones</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <form id="cancelReservationTokenForm" class="hidden">@Html.AntiForgeryToken()</form>
+</div>
+
+<div id="cancelReservationModal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm" aria-hidden="true">
+    <div class="w-full max-w-md overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="flex items-start justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+            <div>
+                <p class="text-sm font-medium text-red-600 dark:text-red-300">Cancelar reserva</p>
+                <h2 class="mt-1 text-lg font-semibold text-zinc-950 dark:text-zinc-100">¿Confirmas la cancelación?</h2>
+            </div>
+            <button type="button" id="closeCancelReservationModal" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-400 transition-all hover:rotate-90 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label="Cerrar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            </button>
+        </div>
+        <div class="px-5 py-5">
+            <p class="text-sm leading-6 text-zinc-600 dark:text-zinc-400">La reserva cambiará a estado cancelado y el horario quedará disponible nuevamente.</p>
+        </div>
+        <div class="flex flex-col-reverse gap-2 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 sm:flex-row sm:justify-end">
+            <button type="button" id="keepReservationButton" class="h-10 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">Volver</button>
+            <button type="button" id="confirmCancelReservationButton" class="inline-flex h-10 items-center justify-center rounded-lg bg-red-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-500 dark:hover:bg-red-400">Sí, cancelar reserva</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const cancelEndpoint = '@Url.Action("CancelarReserva", "Reserva")';
+            const token = document.querySelector('#cancelReservationTokenForm input[name="__RequestVerificationToken"]');
+            const cancelModal = document.getElementById("cancelReservationModal");
+            const closeCancelModalButton = document.getElementById("closeCancelReservationModal");
+            const keepReservationButton = document.getElementById("keepReservationButton");
+            const confirmCancelButton = document.getElementById("confirmCancelReservationButton");
+            let pendingCancelButton = null;
+
+            function showReservationToast(title, message, success) {
+                const root = document.getElementById("toastRoot") ?? document.body;
+                const toast = document.createElement("div");
+                toast.className = `pointer-events-auto relative flex translate-x-6 scale-95 items-start gap-3 overflow-hidden rounded-xl border bg-white p-4 text-sm opacity-0 shadow-lg shadow-zinc-950/10 transition-all duration-300 ease-out dark:bg-zinc-900 dark:shadow-black/30 ${success ? "border-emerald-200 dark:border-emerald-900/70" : "border-red-200 dark:border-red-900/70"}`;
+                toast.setAttribute("role", success ? "status" : "alert");
+                toast.innerHTML = `
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${success ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"}">
+                        ${success ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M20 6 9 17l-5-5" /></svg>' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><circle cx="12" cy="12" r="9" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>'}
+                    </div>
+                    <div class="min-w-0 flex-1 pt-0.5"><p class="font-semibold text-zinc-950 dark:text-zinc-100"></p><p class="mt-0.5 text-zinc-600 dark:text-zinc-400"></p></div>
+                    <button type="button" class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-all hover:rotate-90 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label="Cerrar notificación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>`;
+                const texts = toast.querySelectorAll("p");
+                texts[0].textContent = title;
+                texts[1].textContent = message;
+                root.appendChild(toast);
+
+                const close = () => {
+                    if (!toast.isConnected) return;
+                    toast.classList.remove("translate-x-0", "scale-100", "opacity-100");
+                    toast.classList.add("translate-x-6", "scale-95", "opacity-0");
+                    setTimeout(() => toast.remove(), 300);
+                };
+
+                toast.querySelector("button").addEventListener("click", close);
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    toast.classList.remove("translate-x-6", "scale-95", "opacity-0");
+                    toast.classList.add("translate-x-0", "scale-100", "opacity-100");
+                }));
+                setTimeout(close, 4500);
+            }
+
+            function openCancelModal(button) {
+                pendingCancelButton = button;
+                cancelModal.classList.remove("hidden");
+                cancelModal.classList.add("flex");
+                cancelModal.setAttribute("aria-hidden", "false");
+                document.body.classList.add("overflow-hidden");
+                setTimeout(() => confirmCancelButton.focus(), 0);
+            }
+
+            function closeCancelModal() {
+                cancelModal.classList.add("hidden");
+                cancelModal.classList.remove("flex");
+                cancelModal.setAttribute("aria-hidden", "true");
+                document.body.classList.remove("overflow-hidden");
+                pendingCancelButton = null;
+            }
+
+            async function cancelReservation(button) {
+                const reservationId = button.dataset.cancelReservation;
+                if (!reservationId) return;
+
+                button.disabled = true;
+                confirmCancelButton.disabled = true;
+                confirmCancelButton.textContent = "Cancelando...";
+                const originalText = button.textContent;
+                button.textContent = "Cancelando...";
+
+                try {
+                    const body = new FormData();
+                    body.append("reservaId", reservationId);
+                    if (token) body.append("__RequestVerificationToken", token.value);
+
+                    const response = await fetch(cancelEndpoint, { method: "POST", headers: { "Accept": "application/json" }, body });
+                    const data = await response.json().catch(() => ({}));
+                    const exito = data.exito ?? data.Exito ?? response.ok;
+                    const mensaje = data.mensaje ?? data.Mensaje ?? (exito ? "La reserva fue cancelada correctamente." : "No fue posible cancelar la reserva.");
+
+                    if (!response.ok || !exito) {
+                        showReservationToast("No se pudo cancelar", mensaje, false);
+                        button.disabled = false;
+                        button.textContent = originalText;
+                        closeCancelModal();
+                        return;
+                    }
+
+                    const status = document.querySelector(`[data-reservation-status="${reservationId}"]`);
+                    const statusText = status?.querySelector("[data-reservation-status-text]");
+                    if (status) status.className = "inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300";
+                    if (status) status.querySelector("span:first-child").className = "h-1.5 w-1.5 rounded-full bg-zinc-400";
+                    if (statusText) statusText.textContent = "Cancelada";
+
+                    const actionCell = button.closest("td");
+                    if (actionCell) actionCell.innerHTML = '<span class="text-xs text-zinc-400 dark:text-zinc-500">Sin acciones</span>';
+
+                    const activeCount = document.getElementById("activeReservationsCount");
+                    const cancelledCount = document.getElementById("cancelledReservationsCount");
+                    if (activeCount) activeCount.textContent = String(Math.max(Number(activeCount.textContent) - 1, 0));
+                    if (cancelledCount) cancelledCount.textContent = String(Number(cancelledCount.textContent) + 1);
+
+                    closeCancelModal();
+                    showReservationToast("Reserva cancelada", mensaje, true);
+                } catch (error) {
+                    console.error(error);
+                    showReservationToast("No se pudo cancelar", "Ocurrió un error al cancelar la reserva. Intenta nuevamente.", false);
+                    button.disabled = false;
+                    button.textContent = originalText;
+                    closeCancelModal();
+                } finally {
+                    confirmCancelButton.disabled = false;
+                    confirmCancelButton.textContent = "Sí, cancelar reserva";
+                }
+            }
+
+            document.querySelectorAll("[data-cancel-reservation]").forEach(button => {
+                button.addEventListener("click", () => openCancelModal(button));
+            });
+            confirmCancelButton.addEventListener("click", () => { if (pendingCancelButton) cancelReservation(pendingCancelButton); });
+            closeCancelModalButton.addEventListener("click", closeCancelModal);
+            keepReservationButton.addEventListener("click", closeCancelModal);
+            cancelModal.addEventListener("click", event => { if (event.target === cancelModal) closeCancelModal(); });
+            document.addEventListener("keydown", event => { if (event.key === "Escape" && !cancelModal.classList.contains("hidden")) closeCancelModal(); });
+        });
+    </script>
+}
