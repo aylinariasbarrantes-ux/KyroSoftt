@@ -47,10 +47,10 @@ steps:
     failTaskOnMissingResultsFile: true
     testRunTitle: 'KyroSoft - $(Build.BuildNumber)'
 
-# Conserva también el archivo TRX como descarga de la ejecución.
+# Conserva los resultados incluso si alguna prueba falla.
 - task: PublishPipelineArtifact@1
   displayName: 'Guardar archivos TRX'
-  condition: and(succeededOrFailed(), eq(variables['Agent.JobStatus'], 'Succeeded'))
+  condition: succeededOrFailed()
   inputs:
     targetPath: '$(Agent.TempDirectory)/TestResults'
     artifact: 'reportes-pruebas'
