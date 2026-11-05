@@ -13,6 +13,7 @@ builder.Services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LaboratorioService>();
 builder.Services.AddScoped<ReservaService>();
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
 
 // Hasher de contraseñas de ASP.NET Core Identity (no guarda texto plano)
@@ -33,11 +34,16 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        DbSeeder.Seed(context, hasher);
+        // Evitar ejecutar las migraciones y la carga de datos
+        // cuando se realizan pruebas de integración.
+        if (!app.Environment.IsEnvironment("Testing"))
+        {
+            DbSeeder.Seed(context, hasher);
+        }
     }
     catch (Exception ex)
     {
-        // Un fallo de BD no debe tumbar el arranque de la app
+        // Un fallo de BD no debe tumbar el arranque de la app.
         logger.LogError(ex, "No se pudo migrar o sembrar la base de datos al iniciar.");
     }
 }
@@ -64,3 +70,4 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+public partial class Program { }

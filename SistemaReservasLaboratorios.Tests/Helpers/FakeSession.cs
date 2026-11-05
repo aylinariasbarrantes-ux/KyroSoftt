@@ -1,4 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace SistemaReservasLaboratorios.Tests.Helpers
 {
@@ -8,15 +13,43 @@ namespace SistemaReservasLaboratorios.Tests.Helpers
         private readonly Dictionary<string, byte[]> _datos = new();
 
         public bool IsAvailable => true;
+
         public string Id => "sesion-de-prueba";
+
         public IEnumerable<string> Keys => _datos.Keys;
 
-        public void Clear() => _datos.Clear();
-        public void Remove(string key) => _datos.Remove(key);
-        public void Set(string key, byte[] value) => _datos[key] = value;
-        public bool TryGetValue(string key, out byte[]? value) => _datos.TryGetValue(key, out value);
+        public void Clear()
+        {
+            _datos.Clear();
+        }
 
-        public Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public void Remove(string key)
+        {
+            _datos.Remove(key);
+        }
+
+        public void Set(string key, byte[] value)
+        {
+            _datos[key] = value;
+        }
+
+        public bool TryGetValue(
+            string key,
+            [NotNullWhen(true)] out byte[]? value)
+        {
+            return _datos.TryGetValue(key, out value);
+        }
+
+        public Task CommitAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task LoadAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

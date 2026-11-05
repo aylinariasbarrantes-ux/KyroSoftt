@@ -71,8 +71,9 @@ namespace SistemaReservasLaboratorios.Controllers
             int laboratorioId, string fecha, string horaInicio, string horaFin)
         {
             // Parseo y validación de formato compartidos con RegistrarReserva
-            var error = ParsearHorario(laboratorioId, fecha, horaInicio, horaFin,
-                out var fechaParseada, out var inicioParseado, out var finParseado);
+            var error = ReglasFormularioReserva.ParsearHorario(
+    laboratorioId, fecha, horaInicio, horaFin,
+    out var fechaParseada, out var inicioParseado, out var finParseado);
 
             if (error != null)
             {
@@ -94,8 +95,9 @@ namespace SistemaReservasLaboratorios.Controllers
             int laboratorioId, string fecha, string horaInicio, string horaFin)
         {
             // Mismo parseo/validación de formato que ConsultarDisponibilidad
-            var error = ParsearHorario(laboratorioId, fecha, horaInicio, horaFin,
-                out var fechaParseada, out var inicioParseado, out var finParseado);
+            var error = ReglasFormularioReserva.ParsearHorario(
+    laboratorioId, fecha, horaInicio, horaFin,
+    out var fechaParseada, out var inicioParseado, out var finParseado);
 
             if (error != null)
             {
@@ -127,43 +129,53 @@ namespace SistemaReservasLaboratorios.Controllers
 
         // HU-7: reservas del usuario autenticado. El usuario se toma de la sesión,
         // nunca de un parámetro, por lo que el administrador también ve solo las suyas.
+
         [HttpGet]
         public IActionResult MisReservas()
         {
             var usuario = HttpContext.Session.GetString("NombreUsuario");
+
             if (string.IsNullOrWhiteSpace(usuario))
             {
-                // No debería ocurrir: [SesionRequerida] ya exige NombreUsuario.
                 return BadRequest(OperacionResultado.Error(
                     "No se pudo identificar al usuario en sesión. Inicie sesión nuevamente."));
             }
 
+            // Se obtiene una sola vez para evaluar todas las reservas.
             var ahora = DateTime.Now;
-            var hoy = DateOnly.FromDateTime(ahora);
-            var horaActual = TimeOnly.FromDateTime(ahora);
 
             var reservas = _reservaService.ObtenerMisReservas(usuario)
-                .Select(r =>
+                .Select(r => new MiReservaItemViewModel
                 {
-                    var estaActiva = string.Equals(r.Estado, "Activa", StringComparison.OrdinalIgnoreCase);
-                    var estaExpirada = estaActiva && (r.Fecha < hoy || (r.Fecha == hoy && r.HoraFin <= horaActual));
+                    Id = r.Id,
+                    LaboratorioId = r.LaboratorioId,
 
-                    return new MiReservaItemViewModel
-                    {
-                        Id = r.Id,
-                        LaboratorioId = r.LaboratorioId,
-                        Laboratorio = r.Laboratorio?.Nombre ?? $"Laboratorio {r.LaboratorioId}",
-                        Fecha = r.Fecha.ToString(FormatoFecha),
-                        HoraInicio = r.HoraInicio.ToString(FormatoHora),
-                        HoraFin = r.HoraFin.ToString(FormatoHora),
-                        Estado = estaExpirada ? "Expirada" : r.Estado,
-                        PuedeCancelar = estaActiva && !estaExpirada
-                    };
+                    Laboratorio = r.Laboratorio?.Nombre
+                        ?? $"Laboratorio {r.LaboratorioId}",
+
+                    Fecha = r.Fecha.ToString(FormatoFecha),
+                    HoraInicio = r.HoraInicio.ToString(FormatoHora),
+                    HoraFin = r.HoraFin.ToString(FormatoHora),
+
+                    // HU7: Estado visible calculado mediante regla unitaria.
+                    Estado = ReglasMisReservas.ObtenerEstadoVisible(
+                        r.Estado,
+                        r.Fecha,
+                        r.HoraFin,
+                        ahora),
+
+                    // HU7: Determina si se muestra la opción de cancelar.
+                    PuedeCancelar = ReglasMisReservas.PuedeMostrarCancelacion(
+                        r.Estado,
+                        r.Fecha,
+                        r.HoraFin,
+                        ahora)
                 })
                 .ToList();
 
             return View(reservas);
         }
+
 
         // HU-8: cancela la reserva indicada. Usuario y rol se resuelven solo desde
         // la sesión, para que nadie pueda cancelar a nombre de otro desde el formulario.
@@ -202,64 +214,6 @@ namespace SistemaReservasLaboratorios.Controllers
             return string.Equals(rol, "Administrador", StringComparison.OrdinalIgnoreCase);
         }
 
-        // Convierte los textos del formulario/query a tipos fuertes con el formato esperado.
-        // Devuelve null si todo es válido, o el DisponibilidadResultado con el motivo del rechazo.
-        // Lo usan tanto ConsultarDisponibilidad como RegistrarReserva para no duplicar validaciones.
-        private static DisponibilidadResultado? ParsearHorario(
-            int laboratorioId, string? fecha, string? horaInicio, string? horaFin,
-            out DateOnly fechaParseada, out TimeOnly inicioParseado, out TimeOnly finParseado)
-        {
-            fechaParseada = default;
-            inicioParseado = default;
-            finParseado = default;
-
-            // Se exige que el laboratorio venga informado
-            if (laboratorioId <= 0)
-            {
-                return DisponibilidadResultado.NoDisponible("Debe indicar un laboratorio válido.");
-            }
-
-            // Formato de fecha: yyyy-MM-dd
-            if (!DateOnly.TryParseExact(fecha, FormatoFecha, CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out fechaParseada))
-            {
-                return DisponibilidadResultado.NoDisponible(
-                    $"La fecha no es válida. Usa el formato {FormatoFecha}.");
-            }
-
-            // Formato de hora: HH:mm
-            if (!TimeOnly.TryParseExact(horaInicio, FormatoHora, CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out inicioParseado))
-            {
-                return DisponibilidadResultado.NoDisponible(
-                    $"La hora de inicio no es válida. Usa el formato {FormatoHora}.");
-            }
-
-            if (!TimeOnly.TryParseExact(horaFin, FormatoHora, CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out finParseado))
-            {
-                return DisponibilidadResultado.NoDisponible(
-                    $"La hora de fin no es válida. Usa el formato {FormatoHora}.");
-            }
-
-            if (!EsIntervaloDeTreintaMinutos(inicioParseado) || !EsIntervaloDeTreintaMinutos(finParseado))
-            {
-                return DisponibilidadResultado.NoDisponible(
-                    "Las horas deben seleccionarse en intervalos de 30 minutos (:00 o :30).");
-            }
-
-            if (inicioParseado >= finParseado)
-            {
-                return DisponibilidadResultado.NoDisponible(
-                    "La hora final debe ser posterior a la hora inicial.");
-            }
-
-            return null;
-        }
-
-        private static bool EsIntervaloDeTreintaMinutos(TimeOnly hora)
-        {
-            return hora.Minute == 0 || hora.Minute == 30;
-        }
+        
     }
 }
