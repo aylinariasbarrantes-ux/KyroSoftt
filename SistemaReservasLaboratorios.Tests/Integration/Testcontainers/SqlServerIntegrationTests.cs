@@ -1,9 +1,10 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using SistemaReservasLaboratorios.Data;
+using SistemaReservasLaboratorios.Tests.Infrastructure.Fixtures;
 using Xunit;
 
-namespace SistemaReservasLaboratorios.Tests.Testcontainers;
+namespace SistemaReservasLaboratorios.Tests.Integration.Testcontainers;
 
 public class SqlServerIntegrationTests
     : IClassFixture<SqlServerContainerFixture>

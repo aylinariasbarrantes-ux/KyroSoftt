@@ -5,7 +5,7 @@ using SistemaReservasLaboratorios.Data;
 using SistemaReservasLaboratorios.Models;
 using SistemaReservasLaboratorios.Services;
 
-namespace SistemaReservasLaboratorios.Tests.Integration;
+namespace SistemaReservasLaboratorios.Tests.Integration.Database;
 
 // Integra el servicio real, EF Core, SQLite relacional y el hasher real.
 // Cada caso usa su propia conexión. No necesita SQL Server ni cambia sus datos.

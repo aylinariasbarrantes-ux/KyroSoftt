@@ -7,7 +7,7 @@ using SistemaReservasLaboratorios.Models;
 using SistemaReservasLaboratorios.Services;
 using Xunit;
 
-namespace SistemaReservasLaboratorios.Tests.Services
+namespace SistemaReservasLaboratorios.Tests.UNIT.Services
 {
     public class ReservaTraslapeServiceTests
     {

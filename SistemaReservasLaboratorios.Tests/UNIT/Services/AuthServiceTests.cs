@@ -6,7 +6,7 @@ using SistemaReservasLaboratorios.Services;
 using Xunit;
 using Moq;
 
-namespace SistemaReservasLaboratorios.Tests.Services
+namespace SistemaReservasLaboratorios.Tests.UNIT.Services
 {
     public class AuthServiceTests
     {

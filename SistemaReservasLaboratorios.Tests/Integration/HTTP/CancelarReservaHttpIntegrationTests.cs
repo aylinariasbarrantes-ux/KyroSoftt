@@ -16,7 +16,7 @@ using SistemaReservasLaboratorios.Data;
 using SistemaReservasLaboratorios.Models;
 using Xunit;
 
-namespace SistemaReservasLaboratorios.Tests.Integration
+namespace SistemaReservasLaboratorios.Tests.Integration.HTTP
 {
     public class CancelarReservaHttpIntegrationTests
     {
@@ -143,7 +143,7 @@ namespace SistemaReservasLaboratorios.Tests.Integration
                 .Estado;
         }
 
-        private static async System.Threading.Tasks.Task<string>
+        private static async Task<string>
             ObtenerToken(HttpClient cliente, string ruta)
         {
             var respuesta = await cliente.GetAsync(ruta);
@@ -173,7 +173,7 @@ namespace SistemaReservasLaboratorios.Tests.Integration
             return WebUtility.HtmlDecode(valor.Groups[1].Value);
         }
 
-        private static async System.Threading.Tasks.Task
+        private static async Task
             IniciarSesion(
                 HttpClient cliente,
                 string nombreUsuario = Usuario)
@@ -198,7 +198,7 @@ namespace SistemaReservasLaboratorios.Tests.Integration
                 "El inicio de sesión no produjo la redirección esperada.");
         }
 
-        private static async System.Threading.Tasks.Task<HttpResponseMessage>
+        private static async Task<HttpResponseMessage>
             EnviarCancelacion(
                 HttpClient cliente,
                 int reservaId,
@@ -224,7 +224,7 @@ namespace SistemaReservasLaboratorios.Tests.Integration
         // HU8-21: Sin sesión no se permite cancelar.
 
         [Fact]
-        public async System.Threading.Tasks.Task
+        public async Task
             CancelarReserva_SinSesion_NoPermiteOperacion()
         {
             using var factory = CrearFactory();
@@ -246,7 +246,7 @@ namespace SistemaReservasLaboratorios.Tests.Integration
         // HU8-22: El propietario cancela mediante HTTP.
 
         [Fact]
-        public async System.Threading.Tasks.Task
+        public async Task
             CancelarReserva_Propietario_DevuelveOk()
         {
             using var factory = CrearFactory();
@@ -273,7 +273,7 @@ namespace SistemaReservasLaboratorios.Tests.Integration
         // HU8-23: Un usuario no cancela reservas ajenas.
 
         [Fact]
-        public async System.Threading.Tasks.Task
+        public async Task
             CancelarReserva_ReservaAjena_DevuelveBadRequest()
         {
             using var factory = CrearFactory();
@@ -302,7 +302,7 @@ namespace SistemaReservasLaboratorios.Tests.Integration
         // HU8-24: Una reserva inexistente devuelve BadRequest.
 
         [Fact]
-        public async System.Threading.Tasks.Task
+        public async Task
             CancelarReserva_IdInexistente_DevuelveBadRequest()
         {
             using var factory = CrearFactory();
@@ -325,7 +325,7 @@ namespace SistemaReservasLaboratorios.Tests.Integration
         // HU8-25: No se permite cancelar dos veces.
 
         [Fact]
-        public async System.Threading.Tasks.Task
+        public async Task
             CancelarReserva_DobleCancelacion_SegundaDevuelveBadRequest()
         {
             using var factory = CrearFactory();
@@ -358,7 +358,7 @@ namespace SistemaReservasLaboratorios.Tests.Integration
         // HU8-26: Una solicitud sin token debe rechazarse.
 
         [Fact]
-        public async System.Threading.Tasks.Task
+        public async Task
             CancelarReserva_SinTokenAntifalsificacion_NoCancela()
         {
             using var factory = CrearFactory();

@@ -4,7 +4,7 @@ using SistemaReservasLaboratorios.Data;
 using Testcontainers.MsSql;
 using Xunit;
 
-namespace SistemaReservasLaboratorios.Tests.Testcontainers;
+namespace SistemaReservasLaboratorios.Tests.Infrastructure.Fixtures;
 
 public class SqlServerContainerFixture : IAsyncLifetime
 {

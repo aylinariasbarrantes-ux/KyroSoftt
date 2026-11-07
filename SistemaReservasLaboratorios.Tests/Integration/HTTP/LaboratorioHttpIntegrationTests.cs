@@ -15,7 +15,7 @@ using SistemaReservasLaboratorios.Data;
 using SistemaReservasLaboratorios.Models;
 using Xunit;
 
-namespace SistemaReservasLaboratorios.Tests.Integration
+namespace SistemaReservasLaboratorios.Tests.Integration.HTTP
 {
     public class LaboratorioHttpIntegrationTests
     {
