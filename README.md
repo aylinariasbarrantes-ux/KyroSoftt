@@ -11,6 +11,8 @@ Una historia de usuario se considera "Hecha" cuando cumple con lo siguiente:
 - El código fue probado manualmente contra los criterios de aceptación.
 - El código fue subido (push) al repositorio con un commit que referencia el PBI correspondiente (ej. `AB#1`).
 - No hay errores visibles en la consola del navegador ni en la terminal.
+- Las pruebas automatizadas (`dotnet test`) se ejecutaron antes del push para que el pipeline no falle.
+- Las pruebas manuales de la HU quedaron documentadas en la sección Pruebas de este README.
 - El PBI y sus tasks fueron movidos a "Done" en Azure Boards.
 
 ## Notas de la solución
@@ -36,6 +38,13 @@ Para HU-1 (Inicio de sesión):
 **Persistencia:** el equipo decidió usar **SQL Server LocalDB** con **Entity Framework Core** desde esta etapa, en lugar de colecciones en memoria, para tener una base sólida de cara a futuras historias de usuario (como HU10 - Persistencia de información) y reflejar un escenario más realista de desarrollo.
 
 **Seguridad:** las contraseñas se almacenan hasheadas con `PasswordHasher<Usuario>` de ASP.NET Core Identity (PBKDF2 con salt aleatorio). Por el salt aleatorio, los usuarios de prueba se siembran al arrancar la app y no con `HasData` de EF Core, ya que este último generaría una migración nueva en cada arranque.
+
+Para HU-7 (Ver mis reservas) y HU-8 (Cancelar reserva):
+- `Controllers/ReservaController.cs`: la acción `MisReservas` (GET) y la acción `CancelarReserva` (POST con `[ValidateAntiForgeryToken]`). El usuario y el rol se toman siempre de la sesión (`NombreUsuario` y `Rol`), nunca de un parámetro del formulario.
+- `Services/ReservaService.cs`: `ObtenerMisReservas` y `CancelarReserva(id, usuario, esAdministrador)`. Un usuario solo puede cancelar sus propias reservas; el administrador puede cancelar cualquiera. Una reserva cancelada conserva su registro y deja libre el horario.
+- `Services/ReglasMisReservas.cs` y `Services/ReglasCancelacion.cs`: reglas de estado visible y de cuándo se puede cancelar (no se cancela dos veces ni una reserva ya terminada).
+- `Views/Reserva/MisReservas.cshtml`: tabla con laboratorio, fecha, hora inicial, hora final y estado. Las activas y las canceladas se distinguen con etiqueta de color, y el botón "Cancelar" solo aparece en las activas, con confirmación y mensaje de resultado.
+- `Views/Reserva/Index.cshtml`: en el detalle de cada reserva del calendario, el administrador ve el botón "Cancelar reserva", que usa la misma acción POST.
 
 ## Implementación
 
@@ -128,3 +137,38 @@ Pruebas realizadas para HU-6 - Evitar conflictos de reserva:
 | 2 | Laboratorios distintos, mismo horario | Laboratorio A y Laboratorio B, misma fecha y hora | Ambas reservas se guardan | Correcto: las dos reservas se guardaron |
 | 3 | Reserva cancelada no bloquea | Horario de una reserva con Estado = "Cancelada" | La reserva se guarda | Correcto: la reserva se guardó, las canceladas no cuentan como conflicto |
 | 4 | Laboratorio fuera de servicio | Laboratorio con Estado = "Fuera de servicio" | La reserva se rechaza | Correcto: rechaza con "El laboratorio está fuera de servicio." |
+
+Pruebas realizadas para HU-7 - Ver mis reservas:
+
+La pantalla está en `GET /Reserva/MisReservas`. El usuario se toma de la sesión (`NombreUsuario`), nunca de un parámetro. Se probó con las cuentas `admin` y `usuario1`.
+
+| # | Prueba | Datos | Resultado esperado | Resultado obtenido |
+|---|--------|-------|---------------------|---------------------|
+| 1 | Solo ve las propias | `usuario1` abre "Mis reservas" | Solo aparecen las reservas de `usuario1` | Correcto: la tabla muestra únicamente las reservas del usuario en sesión |
+| 2 | Activas vs canceladas | Usuario con una reserva activa y una cancelada | Se distinguen por color o etiqueta | Correcto: aparecen con etiqueta "Activa" (verde) y "Cancelada" (gris), y los contadores de arriba se actualizan |
+
+Pruebas realizadas para HU-8 - Cancelar reserva:
+
+La cancelación se hace con `POST /Reserva/CancelarReserva`, procesada en `ReservaService.CancelarReserva`. El usuario y el rol se toman de la sesión.
+
+| # | Prueba | Datos | Resultado esperado | Resultado obtenido |
+|---|--------|-------|---------------------|---------------------|
+| 1 | Cancelar reserva propia | `usuario1` cancela una reserva activa desde "Mis reservas" y confirma | Mensaje de éxito y estado "Cancelada" | Correcto: la reserva cambió a "Cancelada" y dejó de tener botón de cancelar |
+| 2 | Intentar cancelar reserva ajena | Usuario que no es el responsable de la reserva | La cancelación se rechaza | Correcto: verificado con las pruebas automáticas `CancelarReserva_UsuarioNoPropietario_RechazaCancelacion` y `CancelarReserva_UsuarioAjeno_DevuelveBadRequest`. En la interfaz, "Mis reservas" solo muestra las reservas propias |
+| 3 | El administrador cancela cualquiera | `admin` abre el detalle de una reserva de `usuario1` en el calendario y pulsa "Cancelar reserva" | La reserva se cancela | Correcto: se mostró el mensaje de éxito y la reserva quedó con estado "Cancelada" |
+| 4 | No se cancela dos veces | Reserva que ya está cancelada | No se puede volver a cancelar | Correcto: la reserva cancelada ya no muestra botón de cancelar, ni en "Mis reservas" ni en el detalle del calendario. El servicio también lo rechaza (`CancelarReserva_DobleCancelacion_SegundaFalla`) |
+| 5 | Una reserva cancelada deja libre el horario | Consultar el horario de una reserva ya cancelada | El horario aparece disponible | Correcto: verificado con la prueba automática `CancelarReserva_CancelacionExitosa_LiberaHorario` |
+
+## Guion de la demo
+
+1. Abrir la aplicación e iniciar sesión como `usuario1` / `user123`.
+2. En el Home, abrir **Laboratorios** y mostrar que el Laboratorio C aparece "Fuera de servicio" (punto rojo) y que su botón "Reservar" está desactivado.
+3. Pulsar **Crear reserva**, elegir Laboratorio A, una fecha futura y un horario, y pulsar **Comprobar disponibilidad**. Mostrar el resultado en verde y pulsar **Registrar reserva**.
+4. Repetir la consulta con el mismo horario y mostrar el resultado en rojo (el laboratorio ya está reservado).
+5. Abrir **Mis reservas** y mostrar la reserva en estado "Activa".
+6. Pulsar **Cancelar**, confirmar y mostrar el mensaje de éxito y el estado "Cancelada". Mostrar que ya no tiene botón de cancelar.
+7. Volver a **Crear reserva** y mostrar que el mismo horario vuelve a estar disponible.
+8. Cerrar sesión e iniciar sesión como `admin` / `admin123`.
+9. En **Reservas** (calendario), abrir el detalle de una reserva de `usuario1` y pulsar **Cancelar reserva** para mostrar que el administrador puede cancelar cualquiera.
+10. Mostrar que el administrador también puede usar **Crear reserva**.
+11. Ejecutar `dotnet test` y mostrar que las pruebas pasan.
