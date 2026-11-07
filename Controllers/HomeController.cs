@@ -29,21 +29,19 @@ namespace SistemaReservasLaboratorios.Controllers
             var rol = HttpContext.Session.GetString("Rol");
             var laboratorios = _laboratorioService.ListarLaboratorios().ToList();
 
-            if (!string.Equals(rol, "Administrador", StringComparison.OrdinalIgnoreCase))
-            {
-                // Solo se muestran laboratorios que pueden utilizarse para una consulta.
-                ViewBag.Laboratorios = laboratorios
-                    .Where(l => string.Equals(l.Estado, "Habilitado", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-            else
+            // Solo se muestran laboratorios que pueden utilizarse para una consulta o reserva.
+            // Lo necesitan tanto el usuario como el administrador (modal "Crear reserva").
+            var laboratoriosHabilitados = laboratorios
+                .Where(l => string.Equals(l.Estado, "Habilitado", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            ViewBag.Laboratorios = laboratoriosHabilitados;
+
+            if (string.Equals(rol, "Administrador", StringComparison.OrdinalIgnoreCase))
             {
                 // Datos reales para el panel del administrador
-                var habilitados = laboratorios.Count(l => string.Equals(l.Estado, "Habilitado", StringComparison.OrdinalIgnoreCase));
-
                 ViewBag.TotalLaboratorios = laboratorios.Count;
-                ViewBag.LaboratoriosHabilitados = habilitados;
-                ViewBag.LaboratoriosFueraDeServicio = laboratorios.Count - habilitados;
+                ViewBag.LaboratoriosHabilitados = laboratoriosHabilitados.Count;
+                ViewBag.LaboratoriosFueraDeServicio = laboratorios.Count - laboratoriosHabilitados.Count;
                 ViewBag.ReservasProximas = _reservaService.ContarReservasProximas();
                 ViewBag.ProximasReservas = _reservaService.ObtenerProximasReservas(5);
             }
