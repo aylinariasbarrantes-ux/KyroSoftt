@@ -1,11 +1,13 @@
-# Ejecuta CI con cada push a cualquiera de las ramas principales.
+
+# Laboratorio: integración continua con SonarQube Cloud
+# Ejecuta el pipeline cuando se actualiza main o master.
 trigger:
   branches:
     include:
       - main
       - master
 
-# Las pruebas usan SQLite temporal; no necesitan el SQL Server local.
+# Agente propio con Docker Desktop para Testcontainers.
 pool:
   name: 'Default'
   demands:
@@ -15,43 +17,75 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-# Descarga el repositorio.
+# 1. Obtener el código fuente.
 - checkout: self
 
-# Instala el SDK correspondiente a net8.0.
+# 2. Instalar el SDK de .NET 8.
 - task: UseDotNet@2
   displayName: 'Instalar .NET 8'
   inputs:
     packageType: 'sdk'
     version: '8.0.x'
 
-# Restaura NuGet para la aplicación y sus pruebas.
+# 3. Preparar el análisis de SonarQube Cloud.
+# La conexión almacena el token de forma segura.
+- task: SonarCloudPrepare@4
+  displayName: 'Preparar análisis SonarQube'
+  inputs:
+    SonarCloud: 'SonarCloud-KyroSoftt'
+    organization: 'kyrosoftt'
+    scannerMode: 'dotnet'
+    projectKey: 'KyroSoftt_Kyro_Group'
+    projectName: 'Kyro_Group'
+    extraProperties: |
+      sonar.cs.opencover.reportsPaths=$(Agent.TempDirectory)/TestResults/**/coverage.opencover.xml
+
+# 4. Restaurar paquetes NuGet.
 - script: dotnet restore SistemaReservasLaboratorios.sln
   displayName: 'Restaurar dependencias'
 
-# Compila toda la solución en Release.
+# 5. Compilar la solución bajo el análisis de SonarQube.
 - script: dotnet build SistemaReservasLaboratorios.sln --configuration $(buildConfiguration) --no-restore
   displayName: 'Compilar en Release'
 
-# Ejecuta todas las pruebas del proyecto, incluidas las de integración.
-- script: dotnet test SistemaReservasLaboratorios.Tests/SistemaReservasLaboratorios.Tests.csproj --configuration $(buildConfiguration) --no-build --logger "trx;LogFileName=resultados.trx" --results-directory "$(Agent.TempDirectory)/TestResults"
-  displayName: 'Ejecutar pruebas unitarias e integración'
 
-# Publica el TRX en Tests incluso si alguna prueba falla.
+# 6. Ejecutar las pruebas unitarias y de integración.
+# Genera resultados TRX y cobertura OpenCover para SonarQube.
+- script: >
+    dotnet test SistemaReservasLaboratorios.Tests/SistemaReservasLaboratorios.Tests.csproj
+    --configuration $(buildConfiguration)
+    --no-build
+    --logger "trx;LogFileName=resultados.trx"
+    --results-directory "$(Agent.TempDirectory)/TestResults"
+    --collect:"XPlat Code Coverage"
+    -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+  displayName: 'Ejecutar pruebas y generar cobertura'
+
+
+# 7. Ejecutar análisis estático y enviar métricas.
+- task: SonarCloudAnalyze@4
+  displayName: 'Ejecutar análisis SonarQube'
+
+# 8. Publicar resultado del Quality Gate.
+- task: SonarCloudPublish@4
+  displayName: 'Publicar Quality Gate'
+  inputs:
+    pollingTimeoutSec: '300'
+
+# 9. Publicar resultados de pruebas.
 - task: PublishTestResults@2
-  displayName: 'Publicar reporte de pruebas'
+  displayName: 'Publicar resultados de pruebas'
   condition: succeededOrFailed()
   inputs:
     testResultsFormat: 'VSTest'
     testResultsFiles: '**/*.trx'
-    searchFolder: '$(Agent.TempDirectory)/TestResults'
+    searchFolder: '$(Agent.TempDirectory)'
     failTaskOnFailedTests: true
-    failTaskOnMissingResultsFile: true
-    testRunTitle: 'KyroSoft - $(Build.BuildNumber)'
+    testRunTitle: 'KyroSoftt - $(Build.BuildNumber)'
 
-# Conserva los resultados incluso si alguna prueba falla.
+# 10. Conservar evidencias generadas.
 - task: PublishPipelineArtifact@1
-  displayName: 'Guardar archivos TRX'
+  displayName: 'Guardar evidencias de pruebas'
   condition: succeededOrFailed()
   inputs:
     targetPath: '$(Agent.TempDirectory)/TestResults'
