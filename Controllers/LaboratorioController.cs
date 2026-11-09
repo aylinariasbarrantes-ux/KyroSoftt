@@ -21,5 +21,27 @@ namespace SistemaReservasLaboratorios.Controllers
             var laboratorios = _laboratorioService.ListarLaboratorios();
             return View(laboratorios);
         }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [AdministradorRequerido]
+        public IActionResult CambiarEstado(int laboratorioId, string nuevoEstado)
+        {
+            var resultado = _laboratorioService.CambiarEstado(
+                laboratorioId, nuevoEstado);
+
+            if (resultado.Exito)
+            {
+                TempData["Exito"] = resultado.Mensaje;
+            }
+            else
+            {
+                TempData["Error"] = resultado.Mensaje;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
     }
 }

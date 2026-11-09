@@ -17,6 +17,8 @@ namespace SistemaReservasLaboratorios.Services
             _context = context;
         }
 
+        // Obtener reservas para el calendario.
+        // No incluye reservas canceladas.
         public List<Reserva> ObtenerReservasCalendario()
         {
             return _context.Reservas
@@ -28,6 +30,7 @@ namespace SistemaReservasLaboratorios.Services
                 .ToList();
         }
 
+        // Consultar disponibilidad de un laboratorio.
         public DisponibilidadResultado ConsultarDisponibilidad(
             int laboratorioId,
             DateOnly fecha,
@@ -67,8 +70,7 @@ namespace SistemaReservasLaboratorios.Services
             }
 
             // HU6: Comprobar conflictos con reservas activas.
-            // Primero filtramos en la base de datos por laboratorio y fecha.
-            // Después utilizamos la regla pura para comparar horarios.
+            // Se excluyen las reservas canceladas.
             var reservasExistentes = _context.Reservas
                 .AsNoTracking()
                 .Where(r => r.LaboratorioId == laboratorioId
@@ -97,6 +99,7 @@ namespace SistemaReservasLaboratorios.Services
             return DisponibilidadResultado.Libre();
         }
 
+        // Registrar una nueva reserva.
         public DisponibilidadResultado RegistrarReserva(
             int laboratorioId,
             DateOnly fecha,
@@ -137,6 +140,7 @@ namespace SistemaReservasLaboratorios.Services
             return DisponibilidadResultado.Libre();
         }
 
+        // Obtener las reservas de un usuario.
         public List<Reserva> ObtenerMisReservas(string responsable)
         {
             return _context.Reservas
@@ -148,7 +152,7 @@ namespace SistemaReservasLaboratorios.Services
                 .ToList();
         }
 
-
+        // Cancelar una reserva.
         public OperacionResultado CancelarReserva(
             int reservaId,
             string usuario,
@@ -194,13 +198,15 @@ namespace SistemaReservasLaboratorios.Services
             }
 
             reserva.Estado = EstadoCancelada;
+
             _context.SaveChanges();
 
             return OperacionResultado.Ok(
                 "La reserva fue cancelada correctamente.");
         }
 
-
+        // Consulta base de próximas reservas.
+        // Excluye las canceladas y las que ya finalizaron.
         private IQueryable<Reserva> ConsultaReservasProximas()
         {
             var ahora = DateTime.Now;
@@ -215,6 +221,7 @@ namespace SistemaReservasLaboratorios.Services
                                  r.HoraFin > horaActual)));
         }
 
+        // Obtener las próximas reservas para el panel.
         public List<Reserva> ObtenerProximasReservas(int cantidad)
         {
             return ConsultaReservasProximas()
@@ -225,9 +232,20 @@ namespace SistemaReservasLaboratorios.Services
                 .ToList();
         }
 
+        // Contar únicamente las próximas reservas.
         public int ContarReservasProximas()
         {
             return ConsultaReservasProximas().Count();
+        }
+
+        // Contar todas las reservas registradas,
+        // excepto las canceladas.
+        // Incluye reservas de todos los usuarios.
+        public int ContarTotalReservas()
+        {
+            return _context.Reservas
+                .AsNoTracking()
+                .Count(r => r.Estado != EstadoCancelada);
         }
     }
 }

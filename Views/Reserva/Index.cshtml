@@ -172,6 +172,32 @@
     </div>
 </div>
 
+<!-- Confirmación personalizada de cancelación (solo administrador) -->
+@if (Model.EsAdministrador)
+{
+
+    <div id="confirmCancelModal"
+         class="fixed inset-0 z-[9999] hidden items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="confirmCancelTitle">
+
+        <div class="w-full max-w-md overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+            <div class="px-6 pb-5 pt-6">
+                <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-6 w-6" aria-hidden="true"><path d="m10.3 3.9-8.1 14A2 2 0 0 0 3.9 21h16.2a2 2 0 0 0 1.7-3.1l-8.1-14a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                </div>
+                <h3 id="confirmCancelTitle" class="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-100">¿Cancelar esta reserva?</h3>
+                <p class="mt-3 text-sm leading-6 text-zinc-500 dark:text-zinc-400">¿Estás seguro de que deseas cancelar esta reserva? Su estado cambiará a <span class="font-semibold text-red-600 dark:text-red-400">Cancelada</span>.</p>
+            </div>
+            <div class="flex flex-col-reverse gap-3 border-t border-zinc-200 bg-zinc-50 px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:justify-end">
+                <button type="button" id="closeConfirmCancel" class="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">Volver</button>
+                <button type="button" id="confirmCancelAction" class="inline-flex h-10 items-center justify-center rounded-lg bg-red-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">Sí, cancelar reserva</button>
+            </div>
+        </div>
+    </div>
+}
+
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", () => {
@@ -792,51 +818,223 @@
 
             document.addEventListener("keydown", event => {
                 if (event.key !== "Escape") return;
+                const confirmDialog = document.getElementById("confirmCancelModal");
+                if (confirmDialog && !confirmDialog.classList.contains("hidden")) return;
                 if (!conflictModal.classList.contains("hidden")) closeConflictModal();
                 else if (!reservationModal.classList.contains("hidden")) closeReservationModal();
             });
 
-            // HU-8: el administrador cancela la reserva con la misma acción POST CancelarReserva
-            const adminCancelButton = document.getElementById("adminCancelReservationButton");
-            if (adminCancelButton) {
-                adminCancelButton.addEventListener("click", async () => {
-                    if (!currentReservationId) return;
-                    if (!confirm("¿Confirmas la cancelación de esta reserva?")) return;
 
-                    const message = document.getElementById("adminCancelMessage");
-                    const token = document.querySelector('#adminCancelTokenForm input[name="__RequestVerificationToken"]');
+            // HU-8: Cancelación con modal personalizado.
+            const adminCancelButton =
+                document.getElementById("adminCancelReservationButton");
+
+            const confirmCancelModal =
+                document.getElementById("confirmCancelModal");
+
+            const closeConfirmCancel =
+                document.getElementById("closeConfirmCancel");
+
+            const confirmCancelAction =
+                document.getElementById("confirmCancelAction");
+
+            let cancelandoReserva = false;
+
+            function abrirConfirmacionCancelacion() {
+                if (!currentReservationId || !confirmCancelModal) return;
+
+                // Mover el modal al body para que aparezca
+                // por encima del detalle de la reserva.
+                if (confirmCancelModal.parentElement !== document.body) {
+                    document.body.appendChild(confirmCancelModal);
+                }
+
+                // Dar prioridad máxima al modal.
+                confirmCancelModal.style.zIndex = "99999";
+
+                confirmCancelModal.classList.remove("hidden");
+                confirmCancelModal.classList.add("flex");
+                confirmCancelModal.setAttribute("aria-hidden", "false");
+
+                document.body.classList.add("overflow-hidden");
+
+                confirmCancelAction.focus();
+            }
+
+            function cerrarConfirmacionCancelacion() {
+                if (!confirmCancelModal || cancelandoReserva) return;
+
+                confirmCancelModal.classList.add("hidden");
+                confirmCancelModal.classList.remove("flex");
+                confirmCancelModal.setAttribute("aria-hidden", "true");
+
+                // Mantener bloqueado el desplazamiento
+                // mientras el detalle siga abierto.
+                if (reservationModal.classList.contains("hidden")) {
+                    document.body.classList.remove("overflow-hidden");
+                }
+
+                adminCancelButton?.focus();
+            }
+
+            if (
+                adminCancelButton &&
+                confirmCancelModal &&
+                confirmCancelAction &&
+                closeConfirmCancel
+            ) {
+                // Abrir la confirmación.
+                adminCancelButton.addEventListener(
+                    "click",
+                    abrirConfirmacionCancelacion
+                );
+
+                // Volver sin cancelar.
+                closeConfirmCancel.addEventListener(
+                    "click",
+                    cerrarConfirmacionCancelacion
+                );
+
+                // Cerrar al hacer clic fuera del modal.
+                confirmCancelModal.addEventListener("click", event => {
+                    if (event.target === confirmCancelModal) {
+                        cerrarConfirmacionCancelacion();
+                    }
+                });
+
+                // Cerrar con la tecla Escape.
+                document.addEventListener("keydown", event => {
+                    if (
+                        event.key === "Escape" &&
+                        !confirmCancelModal.classList.contains("hidden")
+                    ) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                        cerrarConfirmacionCancelacion();
+                    }
+                }, true);
+
+                // Confirmar cancelación.
+                confirmCancelAction.addEventListener("click", async () => {
+                    if (!currentReservationId || cancelandoReserva) return;
+
+                    cancelandoReserva = true;
+
+                    const reservaIdACancelar = currentReservationId;
+
+                    const message =
+                        document.getElementById("adminCancelMessage");
+
+                    const token = document.querySelector(
+                        '#adminCancelTokenForm input[name="__RequestVerificationToken"]'
+                    );
+
                     const mostrarMensaje = (texto, exito) => {
                         message.textContent = texto;
-                        message.className = "rounded-xl border px-4 py-3 text-sm font-medium " + (exito
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-red-200 bg-red-50 text-red-700");
+
+                        message.className =
+                            "rounded-xl border px-4 py-3 text-sm font-medium " +
+                            (exito
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                : "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300");
                     };
 
                     adminCancelButton.disabled = true;
+                    confirmCancelAction.disabled = true;
+                    closeConfirmCancel.disabled = true;
+
+                    confirmCancelAction.textContent = "Cancelando...";
+
                     try {
                         const body = new URLSearchParams();
-                        body.append("reservaId", currentReservationId);
-                        if (token) body.append("__RequestVerificationToken", token.value);
 
-                        const response = await fetch('@Url.Action("CancelarReserva", "Reserva")', {
-                            method: "POST",
-                            headers: { "Accept": "application/json" },
-                            body
-                        });
-                        const data = await response.json().catch(() => ({}));
-                        const exito = response.ok && (data.exito ?? data.Exito ?? true);
-                        const texto = data.mensaje ?? data.Mensaje ?? (exito ? "La reserva fue cancelada correctamente." : "No fue posible cancelar la reserva.");
+                        body.append(
+                            "reservaId",
+                            reservaIdACancelar
+                        );
+
+                        if (token) {
+                            body.append(
+                                "__RequestVerificationToken",
+                                token.value
+                            );
+                        }
+
+                        const response = await fetch(
+                            '@Url.Action("CancelarReserva", "Reserva")',
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Accept": "application/json"
+                                },
+                                body
+                            }
+                        );
+
+                        const data = await response.json()
+                            .catch(() => ({}));
+
+                        const exito =
+                            response.ok &&
+                            (data.exito ?? data.Exito ?? true);
+
+                        const texto =
+                            data.mensaje ??
+                            data.Mensaje ??
+                            (exito
+                                ? "La reserva fue cancelada correctamente."
+                                : "No fue posible cancelar la reserva.");
 
                         mostrarMensaje(texto, exito);
-                        if (exito) setTimeout(() => window.location.reload(), 1200);
-                        else adminCancelButton.disabled = false;
+
+                        // Cerrar la confirmación.
+                        confirmCancelModal.classList.add("hidden");
+                        confirmCancelModal.classList.remove("flex");
+                        confirmCancelModal.setAttribute(
+                            "aria-hidden",
+                            "true"
+                        );
+
+                        if (exito) {
+                            // Actualizar calendario y contadores.
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1200);
+                        } else {
+                            adminCancelButton.disabled = false;
+                            adminCancelButton.focus();
+                        }
+
                     } catch (error) {
                         console.error(error);
-                        mostrarMensaje("Ocurrió un error al cancelar la reserva. Intenta nuevamente.", false);
+
+                        mostrarMensaje(
+                            "Ocurrió un error al cancelar la reserva. Intenta nuevamente.",
+                            false
+                        );
+
+                        confirmCancelModal.classList.add("hidden");
+                        confirmCancelModal.classList.remove("flex");
+                        confirmCancelModal.setAttribute(
+                            "aria-hidden",
+                            "true"
+                        );
+
                         adminCancelButton.disabled = false;
+                        adminCancelButton.focus();
+
+                    } finally {
+                        cancelandoReserva = false;
+
+                        confirmCancelAction.disabled = false;
+                        closeConfirmCancel.disabled = false;
+
+                        confirmCancelAction.textContent =
+                            "Sí, cancelar reserva";
                     }
                 });
             }
+
 
             renderCalendar();
         });
