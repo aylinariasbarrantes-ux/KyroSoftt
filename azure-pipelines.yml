@@ -29,7 +29,7 @@ steps:
 
 # 3. Preparar el análisis de SonarQube Cloud.
 # La conexión almacena el token de forma segura.
-- task: SonarCloudPrepare@4.0.0
+- task: SonarCloudPrepare@4
   displayName: 'Preparar análisis SonarQube'
   inputs:
     SonarCloud: 'SonarCloud-KyroSoftt'
@@ -63,11 +63,11 @@ steps:
 
 
 # 7. Ejecutar análisis estático y enviar métricas.
-- task: SonarCloudAnalyze@4.0.0
+- task: SonarCloudAnalyze@4
   displayName: 'Ejecutar análisis SonarQube'
 
 # 8. Publicar resultado del Quality Gate.
-- task: SonarCloudPublish@4.0.0
+- task: SonarCloudPublish@4
   displayName: 'Publicar Quality Gate'
   inputs:
     pollingTimeoutSec: '300'
