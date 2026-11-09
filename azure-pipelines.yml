@@ -1,13 +1,14 @@
 
-# Laboratorio: integración continua con SonarQube Cloud
-# Ejecuta el pipeline cuando se actualiza main o master.
+# Integración continua - KyroSoft
+# .NET 8 + xUnit + Testcontainers + SonarQube Cloud
+
 trigger:
   branches:
     include:
       - main
       - master
 
-# Agente propio con Docker Desktop para Testcontainers.
+# Agente local con Docker Desktop
 pool:
   name: 'Default'
   demands:
@@ -17,18 +18,19 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-# 1. Obtener el código fuente.
-- checkout: self
 
-# 2. Instalar el SDK de .NET 8.
+# 1. Obtener código fuente completo.
+- checkout: self
+  fetchDepth: 0
+
+# 2. Instalar .NET 8.
 - task: UseDotNet@2
   displayName: 'Instalar .NET 8'
   inputs:
     packageType: 'sdk'
     version: '8.0.x'
 
-# 3. Preparar el análisis de SonarQube Cloud.
-# La conexión almacena el token de forma segura.
+# 3. Preparar análisis SonarQube Cloud.
 - task: SonarCloudPrepare@4
   displayName: 'Preparar análisis SonarQube'
   inputs:
@@ -39,51 +41,95 @@ steps:
     projectName: 'Kyro_Group'
     extraProperties: |
       sonar.cs.opencover.reportsPaths=$(Agent.TempDirectory)/TestResults/**/coverage.opencover.xml
+      sonar.cs.vstest.reportsPaths=$(Agent.TempDirectory)/TestResults/**/*.trx
 
-# 4. Restaurar paquetes NuGet.
+# 4. Restaurar dependencias.
 - script: dotnet restore SistemaReservasLaboratorios.sln
   displayName: 'Restaurar dependencias'
 
-# 5. Compilar la solución bajo el análisis de SonarQube.
-- script: dotnet build SistemaReservasLaboratorios.sln --configuration $(buildConfiguration) --no-restore
-  displayName: 'Compilar en Release'
+# 5. Compilar la solución.
+- script: >
+    dotnet build SistemaReservasLaboratorios.sln
+    --configuration $(buildConfiguration)
+    --no-restore
+  displayName: 'Compilar solución en Release'
 
-
-# 6. Ejecutar las pruebas unitarias y de integración.
-# Genera resultados TRX y cobertura OpenCover para SonarQube.
+# 6. Ejecutar pruebas unitarias y de integración.
+# Generar cobertura OpenCover y Cobertura.
 - script: >
     dotnet test SistemaReservasLaboratorios.Tests/SistemaReservasLaboratorios.Tests.csproj
     --configuration $(buildConfiguration)
     --no-build
     --logger "trx;LogFileName=resultados.trx"
     --results-directory "$(Agent.TempDirectory)/TestResults"
-    --collect:"XPlat Code Coverage"
-    -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+    --collect "XPlat Code Coverage;Format=opencover,cobertura"
   displayName: 'Ejecutar pruebas y generar cobertura'
 
+# 7. Verificar que se haya generado OpenCover.
+# Si falta el reporte, detener el análisis.
+- powershell: |
+    $ruta = "$(Agent.TempDirectory)/TestResults"
 
-# 7. Ejecutar análisis estático y enviar métricas.
+    Write-Host "Buscando reportes de cobertura en: $ruta"
+
+    $reportes = @(
+        Get-ChildItem `
+            -Path $ruta `
+            -Filter "coverage.opencover.xml" `
+            -Recurse `
+            -File `
+            -ErrorAction SilentlyContinue
+    )
+
+    if ($reportes.Count -eq 0) {
+        Write-Host "##vso[task.logissue type=error]No se encontró coverage.opencover.xml."
+        Write-Host "Verificar que el proyecto de pruebas tenga instalado coverlet.collector."
+        exit 1
+    }
+
+    foreach ($reporte in $reportes) {
+        Write-Host "Reporte encontrado: $($reporte.FullName)"
+        Write-Host "Tamaño: $($reporte.Length) bytes"
+
+        if ($reporte.Length -eq 0) {
+            Write-Host "##vso[task.logissue type=error]El reporte está vacío."
+            exit 1
+        }
+    }
+
+    Write-Host "Reportes OpenCover encontrados correctamente."
+  displayName: 'Verificar reporte OpenCover'
+
+# 8. Ejecutar análisis SonarQube.
 - task: SonarCloudAnalyze@4
   displayName: 'Ejecutar análisis SonarQube'
 
-# 8. Publicar resultado del Quality Gate.
+# 9. Publicar Quality Gate.
 - task: SonarCloudPublish@4
   displayName: 'Publicar Quality Gate'
   inputs:
     pollingTimeoutSec: '300'
 
-# 9. Publicar resultados de pruebas.
+# 10. Publicar resultados de pruebas.
 - task: PublishTestResults@2
   displayName: 'Publicar resultados de pruebas'
   condition: succeededOrFailed()
   inputs:
     testResultsFormat: 'VSTest'
     testResultsFiles: '**/*.trx'
-    searchFolder: '$(Agent.TempDirectory)'
+    searchFolder: '$(Agent.TempDirectory)/TestResults'
     failTaskOnFailedTests: true
     testRunTitle: 'KyroSoftt - $(Build.BuildNumber)'
 
-# 10. Conservar evidencias generadas.
+# 11. Publicar cobertura en Azure DevOps.
+- task: PublishCodeCoverageResults@2
+  displayName: 'Publicar cobertura de código'
+  condition: succeededOrFailed()
+  inputs:
+    summaryFileLocation: '$(Agent.TempDirectory)/TestResults/**/coverage.cobertura.xml'
+    failIfCoverageEmpty: false
+
+# 12. Guardar evidencias.
 - task: PublishPipelineArtifact@1
   displayName: 'Guardar evidencias de pruebas'
   condition: succeededOrFailed()
